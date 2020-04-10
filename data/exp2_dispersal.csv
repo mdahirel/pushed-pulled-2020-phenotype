@@ -1,0 +1,193 @@
+Mix,Treatment,Replicate,Bloc,Location,Generation,Neggs_start,Neggs_arrival
+1,stock,stock,stock,stock,0,31,10
+1,stock,stock,stock,stock,0,30,12
+1,stock,stock,stock,stock,0,12,0
+1,stock,stock,stock,stock,0,31,8
+2,stock,stock,stock,stock,0,30,3
+2,stock,stock,stock,stock,0,25,1
+2,stock,stock,stock,stock,0,19,5
+2,stock,stock,stock,stock,0,40,5
+3,stock,stock,stock,stock,0,29,11
+3,stock,stock,stock,stock,0,13,7
+3,stock,stock,stock,stock,0,17,3
+3,stock,stock,stock,stock,0,20,5
+3,control,1,1,core,12,6,14
+3,control,1,1,core,12,0,12
+1,restricted connectedness,1,1,core,12,11,5
+1,restricted connectedness,1,1,core,12,15,5
+3,restricted connectedness,1,1,core,12,44,22
+3,restricted connectedness,1,1,core,12,37,4
+3,restricted connectedness,1,1,front,12,11,11
+1,control,1,1,core,12,27,12
+1,control,1,1,core,12,11,7
+1,restricted connectedness,1,1,front,12,10,5
+1,restricted connectedness,1,1,front,12,3,4
+3,control,1,1,front,12,5,16
+3,control,1,1,front,12,10,5
+1,control,1,1,front,12,6,10
+1,control,1,1,front,12,22,10
+2,control,1,1,front,12,7,1
+2,control,1,1,front,12,26,7
+2,restricted connectedness,2,1,front,12,22,7
+2,restricted connectedness,2,1,front,12,27,20
+2,restricted connectedness,2,1,core,12,53,6
+2,restricted connectedness,2,1,core,12,37,5
+2,control,1,1,core,12,28,10
+2,control,1,1,core,12,11,8
+3,restricted connectedness,3,2,front,12,30,2
+3,restricted connectedness,3,2,front,12,31,5
+2,control,2,2,front,12,55,3
+2,control,2,2,front,12,38,5
+1,control,2,2,core,12,60,3
+1,control,2,2,core,12,72,2
+3,restricted connectedness,3,2,core,12,39,3
+3,restricted connectedness,3,2,core,12,35,0
+2,restricted connectedness,3,2,front,12,46,6
+2,restricted connectedness,3,2,front,12,42,1
+1,control,3,2,front,12,14,0
+1,control,3,2,front,12,20,0
+2,control,2,2,core,12,32,0
+2,control,2,2,core,12,41,0
+1,restricted connectedness,3,2,core,12,24,0
+1,restricted connectedness,3,2,core,12,15,0
+1,control,2,2,front,12,29,1
+1,control,2,2,front,12,28,0
+1,restricted connectedness,3,2,front,12,11,1
+1,restricted connectedness,3,2,front,12,13,4
+1,control,3,2,core,12,29,2
+1,control,3,2,core,12,43,2
+3,control,4,3,front,12,30,5
+3,control,4,3,front,12,42,20
+2,control,4,3,core,12,41,15
+2,control,4,3,core,12,45,1
+3,restricted connectedness,4,3,front,12,16,11
+3,restricted connectedness,4,3,front,12,19,20
+3,restricted connectedness,4,3,core,12,16,9
+3,restricted connectedness,4,3,core,12,12,10
+2,control,4,3,front,12,31,0
+2,control,4,3,front,12,30,6
+3,restricted connectedness,5,3,core,12,26,8
+3,restricted connectedness,5,3,core,12,31,2
+1,control,5,3,core,12,40,6
+1,control,5,3,core,12,44,17
+1,control,5,3,front,12,28,4
+1,control,5,3,front,12,26,5
+3,restricted connectedness,5,3,front,12,29,2
+3,restricted connectedness,5,3,front,12,28,6
+1,restricted connectedness,5,3,front,12,26,2
+1,restricted connectedness,5,3,front,12,23,2
+1,restricted connectedness,5,3,core,12,33,3
+1,restricted connectedness,5,3,core,12,42,2
+2,control,5,4,core,12,26,7
+2,control,5,4,core,12,28,6
+1,restricted connectedness,6,4,core,12,18,0
+1,restricted connectedness,6,4,core,12,26,1
+3,control,6,4,core,12,14,6
+3,control,6,4,core,12,11,7
+2,restricted connectedness,5,4,front,12,28,11
+2,restricted connectedness,5,4,front,12,10,1
+3,control,5,4,core,12,10,3
+3,control,5,4,core,12,11,2
+2,restricted connectedness,5,4,core,12,14,7
+2,restricted connectedness,5,4,core,12,29,4
+2,control,5,4,front,12,23,24
+2,control,5,4,front,12,12,1
+3,control,5,4,front,12,7,8
+3,control,5,4,front,12,25,3
+1,restricted connectedness,6,4,front,12,31,0
+1,restricted connectedness,6,4,front,12,23,13
+2,restricted connectedness,6,4,core,12,31,4
+2,restricted connectedness,6,4,core,12,34,0
+3,restricted connectedness,1,1,core,4,55,7
+3,restricted connectedness,1,1,core,4,54,2
+1,control,1,1,core,4,41,0
+1,control,1,1,core,4,34,0
+2,restricted connectedness,2,1,core,4,38,2
+2,restricted connectedness,2,1,core,4,59,2
+2,restricted connectedness,2,1,front,4,71,4
+2,restricted connectedness,2,1,front,4,71,1
+3,control,1,1,front,4,65,7
+3,control,1,1,front,4,46,7
+2,control,1,1,front,4,44,4
+2,control,1,1,front,4,58,0
+3,restricted connectedness,1,1,front,4,23,1
+3,restricted connectedness,1,1,front,4,34,6
+1,restricted connectedness,1,1,front,4,56,0
+1,restricted connectedness,1,1,front,4,45,2
+2,control,1,1,core,4,66,1
+2,control,1,1,core,4,41,2
+1,restricted connectedness,1,1,core,4,52,3
+1,restricted connectedness,1,1,core,4,58,0
+1,control,1,1,front,4,27,1
+1,control,1,1,front,4,25,2
+3,control,1,1,core,4,43,3
+3,control,1,1,core,4,35,4
+2,control,2,2,core,4,74,0
+2,control,2,2,core,4,64,0
+2,restricted connectedness,3,2,core,4,54,0
+2,restricted connectedness,3,2,core,4,50,1
+1,control,2,2,core,4,54,2
+1,control,2,2,core,4,55,3
+1,control,2,2,front,4,46,3
+1,control,2,2,front,4,44,1
+1,restricted connectedness,3,2,core,4,51,0
+1,restricted connectedness,3,2,core,4,29,2
+3,restricted connectedness,3,2,core,4,57,4
+3,restricted connectedness,3,2,core,4,51,1
+1,restricted connectedness,3,2,front,4,51,5
+1,restricted connectedness,3,2,front,4,69,1
+3,restricted connectedness,3,2,front,4,54,4
+3,restricted connectedness,3,2,front,4,57,3
+2,control,2,2,front,4,28,0
+2,control,2,2,front,4,37,2
+1,control,3,2,front,4,38,3
+1,control,3,2,core,4,24,2
+1,control,3,2,core,4,34,2
+2,restricted connectedness,3,2,front,4,60,3
+3,control,4,3,front,4,34,11
+3,control,4,3,front,4,44,5
+2,control,4,3,core,4,60,2
+2,control,4,3,core,4,50,1
+3,control,4,3,core,4,33,2
+3,control,4,3,core,4,30,1
+3,restricted connectedness,4,3,front,4,53,6
+3,restricted connectedness,4,3,front,4,32,11
+3,restricted connectedness,4,3,core,4,63,4
+3,restricted connectedness,4,3,core,4,48,8
+2,control,4,3,front,4,22,1
+3,restricted connectedness,5,3,core,4,31,4
+3,restricted connectedness,5,3,core,4,32,5
+1,control,5,3,core,4,56,6
+1,control,5,3,core,4,50,2
+1,control,5,3,front,4,35,1
+1,control,5,3,front,4,39,2
+3,restricted connectedness,5,3,front,4,35,10
+3,restricted connectedness,5,3,front,4,56,7
+1,restricted connectedness,5,3,front,4,50,0
+1,restricted connectedness,5,3,front,4,40,3
+1,restricted connectedness,5,3,core,4,48,1
+1,restricted connectedness,5,3,core,4,51,1
+2,control,5,4,core,4,51,2
+2,control,5,4,core,4,44,4
+1,restricted connectedness,6,4,core,4,37,4
+1,restricted connectedness,6,4,core,4,37,1
+3,control,6,4,core,4,43,24
+3,control,6,4,core,4,54,4
+2,restricted connectedness,5,4,front,4,43,2
+2,restricted connectedness,5,4,front,4,61,9
+3,control,5,4,core,4,32,8
+3,control,5,4,core,4,23,5
+3,control,6,4,front,4,44,2
+3,control,6,4,front,4,25,14
+2,restricted connectedness,5,4,core,4,36,5
+2,restricted connectedness,5,4,core,4,36,7
+2,control,5,4,front,4,25,10
+2,control,5,4,front,4,45,7
+2,restricted connectedness,6,4,front,4,48,7
+2,restricted connectedness,6,4,front,4,48,6
+3,control,5,4,front,4,34,8
+3,control,5,4,front,4,31,8
+1,restricted connectedness,6,4,front,4,26,7
+1,restricted connectedness,6,4,front,4,29,8
+2,restricted connectedness,6,4,core,4,54,1
+2,restricted connectedness,6,4,core,4,51,2

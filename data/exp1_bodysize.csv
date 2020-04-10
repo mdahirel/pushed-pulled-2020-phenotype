@@ -1,0 +1,506 @@
+Mix,Generation,Treatment,Replicate,Location,Patch,photoID,indID,uniqueID,tibia_anael,tibia_camille
+1,0,stock,stock,stock,stock,G0_M1_G_1,1,1,147.115,143.945
+1,0,stock,stock,stock,stock,G0_M1_G_2,2,2,157.284,155.545
+1,0,stock,stock,stock,stock,G0_M1_G_3,3,3,162.637,159.687
+1,0,stock,stock,stock,stock,G0_M1_G_4,4,4,163.993,158.719
+1,0,stock,stock,stock,stock,G0_M1_G_5,5,5,167.188,165.411
+1,0,stock,stock,stock,stock,G0_M1_G_6,6,6,135.469,131.975
+1,0,stock,stock,stock,stock,G0_M1_G_7,7,7,141.616,152.026
+1,0,stock,stock,stock,stock,G0_M1_G_8,8,8,163.149,165.191
+1,0,stock,stock,stock,stock,G0_M1_G_9,9,9,164.458,165.734
+1,0,stock,stock,stock,stock,G0_M1_G_10,10,10,NA,NA
+1,0,stock,stock,stock,stock,G0_M1_G_11,11,11,160.763,165.03
+1,0,stock,stock,stock,stock,G0_M1_G_12,12,12,159.461,157.059
+1,0,stock,stock,stock,stock,G0_M1_G_13,13,13,165.649,164.648
+1,0,stock,stock,stock,stock,G0_M1_G_14,14,14,151.982,151.848
+1,0,stock,stock,stock,stock,G0_M1_G_15,15,15,155.949,153.26
+1,0,stock,stock,stock,stock,G0_M1_G_16,16,16,NA,NA
+1,0,stock,stock,stock,stock,G0_M1_G_17,17,17,152.262,155.386
+1,0,stock,stock,stock,stock,G0_M1_G_18,18,18,155.906,153.766
+1,0,stock,stock,stock,stock,G0_M1_G_19,19,19,158.171,163.328
+1,0,stock,stock,stock,stock,G0_M1_G_20,20,20,159.847,163.571
+2,0,stock,stock,stock,stock,G0_M2_G_1,1,21,159.294,161.038
+2,0,stock,stock,stock,stock,G0_M2_G_2,2,22,149.17,152.505
+2,0,stock,stock,stock,stock,G0_M2_G_3,3,23,151.614,158.333
+2,0,stock,stock,stock,stock,G0_M2_G_4,4,24,153.514,151.505
+2,0,stock,stock,stock,stock,G0_M2_G_5,5,25,163.163,162.363
+2,0,stock,stock,stock,stock,G0_M2_G_6,6,26,168.902,168.385
+2,0,stock,stock,stock,stock,G0_M2_G_7,7,27,165.51,168.207
+2,0,stock,stock,stock,stock,G0_M2_G_8,8,28,155.605,160.849
+2,0,stock,stock,stock,stock,G0_M2_G_9,9,29,147.211,153.755
+2,0,stock,stock,stock,stock,G0_M2_G_10,10,30,162.475,165.208
+2,0,stock,stock,stock,stock,G0_M2_G_11,11,31,163.867,165.243
+2,0,stock,stock,stock,stock,G0_M2_G_12,12,32,177.009,172.334
+2,0,stock,stock,stock,stock,G0_M2_G_13,13,33,160.661,160.712
+2,0,stock,stock,stock,stock,G0_M2_G_14,14,34,171.4,172.907
+2,0,stock,stock,stock,stock,G0_M2_G_15,15,35,163.598,168.438
+2,0,stock,stock,stock,stock,G0_M2_G_16,16,36,166.435,167.721
+2,0,stock,stock,stock,stock,G0_M2_G_17,17,37,165.732,163.571
+2,0,stock,stock,stock,stock,G0_M2_G_18,18,38,158.508,163.063
+2,0,stock,stock,stock,stock,G0_M2_G_19,19,39,167.644,170.776
+2,0,stock,stock,stock,stock,G0_M2_G_20,20,40,157.631,154.534
+3,0,stock,stock,stock,stock,G0_M3_G_1,1,41,82.437,NA
+3,0,stock,stock,stock,stock,G0_M3_G_2,2,42,154.627,154.448
+3,0,stock,stock,stock,stock,G0_M3_G_3,3,43,168.22,170.472
+3,0,stock,stock,stock,stock,G0_M3_G_4,4,44,169.537,168.841
+3,0,stock,stock,stock,stock,G0_M3_G_5,5,45,148.227,149.385
+3,0,stock,stock,stock,stock,G0_M3_G_6,6,46,141.772,140.261
+3,0,stock,stock,stock,stock,G0_M3_G_7,7,47,144.426,151.324
+3,0,stock,stock,stock,stock,G0_M3_G_8,8,48,150.556,151.483
+3,0,stock,stock,stock,stock,G0_M3_G_9,9,49,152.489,160.12
+3,0,stock,stock,stock,stock,G0_M3_G_10,10,50,134.326,136.536
+3,0,stock,stock,stock,stock,G0_M3_G_11,11,51,158.446,161.244
+3,0,stock,stock,stock,stock,G0_M3_G_12,12,52,143.393,148.327
+3,0,stock,stock,stock,stock,G0_M3_G_13,13,53,155.111,157.8
+3,0,stock,stock,stock,stock,G0_M3_G_14,14,54,142.876,146.484
+3,0,stock,stock,stock,stock,G0_M3_G_15,15,55,152.148,157.132
+3,0,stock,stock,stock,stock,G0_M3_G_16,16,56,166.866,167.744
+3,0,stock,stock,stock,stock,G0_M3_G_17,17,57,144.048,145.377
+3,0,stock,stock,stock,stock,G0_M3_G_18,18,58,154.53,157.409
+3,0,stock,stock,stock,stock,G0_M3_G_19,19,59,156.122,158.057
+3,0,stock,stock,stock,stock,G0_M3_G_20,20,60,163.34,164.37
+3,12,control,1,2,7,G12_3PL_1_14_1,1,61,133.952,131.365
+3,12,control,1,2,7,G12_3PL_1_14_2,2,62,123.536,124.88
+3,12,control,1,2,7,G12_3PL_1_14_3,3,63,151.792,153.344
+3,12,control,1,2,7,G12_3PL_1_14_4,4,64,128.797,130.066
+3,12,control,1,2,7,G12_3PL_1_14_5,5,65,145.327,147.846
+3,12,control,1,2,7,G12_3PL_1_14_6,6,66,137.509,139.74
+3,12,control,1,2,7,G12_3PL_1_14_7,7,67,154.646,156.89
+3,12,control,1,2,7,G12_3PL_1_14_8,8,68,155.001,155.709
+3,12,control,1,2,7,G12_3PL_1_14_9,9,69,133.52,137.561
+3,12,control,1,2,7,G12_3PL_1_14_10,10,70,145.978,146.77
+3,12,control,1,2,7,G12_3PL_1_14_11,11,71,138.439,139.44
+3,12,control,1,2,7,G12_3PL_1_14_12,12,72,131.694,130.66
+3,12,control,1,2,7,G12_3PL_1_14_13,13,73,146.835,153.407
+3,12,control,1,2,7,G12_3PL_1_14_14,14,74,149.782,147.179
+3,12,control,1,2,7,G12_3PL_1_14_15,15,75,138.741,139.664
+3,12,control,1,2,7,G12_3PL_1_14_16,16,76,115.083,113.937
+3,12,control,1,2,7,G12_3PL_1_14_17,17,77,137.16,137.715
+3,12,control,1,2,7,G12_3PL_1_14_18,18,78,151.061,147.714
+3,12,control,1,2,7,G12_3PL_1_14_19,19,79,102.943,106.454
+3,12,control,1,2,7,G12_3PL_1_14_20,20,80,132.661,130.833
+2,12,control,1,2,8,G12_2PL_1_8_1,1,81,135.537,135.605
+2,12,control,1,2,8,G12_2PL_1_8_2,2,82,161.58,155.852
+2,12,control,1,2,8,G12_2PL_1_8_3,3,83,114.928,120.14
+2,12,control,1,2,8,G12_2PL_1_8_4,4,84,135.254,138.439
+2,12,control,1,2,8,G12_2PL_1_8_5,5,85,152.916,149.24
+2,12,control,1,2,8,G12_2PL_1_8_6,6,86,155.319,160.091
+2,12,control,1,2,8,G12_2PL_1_8_7,7,87,153.701,163.993
+2,12,control,1,2,8,G12_2PL_1_8_8,8,88,136.079,136.413
+2,12,control,1,2,8,G12_2PL_1_8_9,9,89,150.275,153.129
+2,12,control,1,2,8,G12_2PL_1_8_10,10,90,165.643,168.155
+2,12,control,1,2,8,G12_2PL_1_8_11,11,91,150.182,151.109
+2,12,control,1,2,8,G12_2PL_1_8_12,12,92,145.022,151.564
+2,12,control,1,2,8,G12_2PL_1_8_13,13,93,150.95,154.223
+2,12,control,1,2,8,G12_2PL_1_8_14,14,94,165.01,162.292
+2,12,control,1,2,8,G12_2PL_1_8_15,15,95,165.612,165.178
+2,12,control,1,2,8,G12_2PL_1_8_16,16,96,144.099,142.383
+2,12,control,1,2,8,G12_2PL_1_8_17,17,97,164.371,158.808
+2,12,control,1,2,8,G12_2PL_1_8_18,18,98,NA,NA
+2,12,control,1,2,8,G12_2PL_1_8_19,19,99,146.166,142.986
+2,12,control,1,2,8,G12_2PL_1_8_20,20,100,158.852,158.411
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_1,1,101,159.247,156.078
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_2,2,102,159.326,159.833
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_3,3,103,150.849,151.722
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_4,4,104,149.189,154.372
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_5,5,105,168.99,169.216
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_6,6,106,142.993,146.793
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_7,7,107,157.634,159.087
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_8,8,108,153.916,155.995
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_9,9,109,156.768,153.508
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_10,10,110,149.709,154.579
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_11,11,111,NA,NA
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_12,12,112,154.638,156.244
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_13,13,113,155.983,159.087
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_1,1,114,129.898,129.365
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_2,2,115,149.61,151.022
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_3,3,116,163.578,161.542
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_4,4,117,161.431,160.096
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_5,5,118,160.92,155.969
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_6,6,119,149.794,152.132
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_7,7,120,152.946,154.813
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_8,8,121,160.991,164.916
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_9,9,122,163.539,163.699
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_10,10,123,154.428,154.151
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_11,11,124,154.545,158.588
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_12,12,125,162.963,161.892
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_13,13,126,158.413,157.122
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_14,14,127,NA,NA
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_15,15,128,125.554,123.461
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_16,16,129,155.533,156.909
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_17,17,130,150.991,148.65
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_18,18,131,NA,NA
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_19,19,132,125.225,134.283
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_20,20,133,156.575,158.732
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_1,1,134,141.071,149.583
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_2,2,135,NA,NA
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_3,3,136,135.559,139.331
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_4,4,137,144.629,145.406
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_5,5,138,151.531,156.122
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_6,6,139,149.406,150.036
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_7,7,140,129.993,133.324
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_8,8,141,152.193,155.732
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_9,9,142,149.053,151.044
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_10,10,143,133.571,138.513
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_11,11,144,147.52,154.946
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_12,12,145,149.801,152.125
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_13,13,146,151.814,152.026
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_14,14,147,143.797,147.488
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_15,15,148,160.808,161.495
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_16,16,149,155.894,153.68
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_17,17,150,142.037,144.199
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_18,18,151,149.159,152.021
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_19,19,152,158.386,153.252
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_20,20,153,169.827,168.037
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_21,21,154,151.588,154.04
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_22,22,155,156.566,161.481
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_23,23,156,160.621,164.958
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_24,24,157,137.974,143.239
+1,12,control,1,1,2,G12_1PL_1_1_1,1,158,157.462,157.632
+1,12,control,1,1,2,G12_1PL_1_1_2,2,159,144.547,144.279
+1,12,control,1,1,2,G12_1PL_1_1_3,3,160,159.875,162.725
+1,12,control,1,1,2,G12_1PL_1_1_4,4,161,NA,NA
+1,12,control,1,1,2,G12_1PL_1_1_5,5,162,164.971,165.111
+1,12,control,1,1,2,G12_1PL_1_1_6,6,163,160.959,165.629
+1,12,control,1,1,2,G12_1PL_1_1_7,7,164,175.44,175.083
+1,12,control,1,1,2,G12_1PL_1_1_8,8,165,143.194,148.85
+1,12,control,1,1,2,G12_1PL_1_1_9,9,166,158.139,162.269
+1,12,control,1,1,2,G12_1PL_1_1_10,10,167,152.386,150.12
+1,12,control,1,1,2,G12_1PL_1_1_11,11,168,149.402,150.49
+1,12,control,1,1,2,G12_1PL_1_1_12,12,169,161.358,163.053
+1,12,control,1,1,2,G12_1PL_1_1_13,13,170,164.866,161.088
+1,12,control,1,1,2,G12_1PL_1_1_14,14,171,143.92,150.894
+1,12,control,1,1,2,G12_1PL_1_1_15,15,172,153.449,155.897
+1,12,control,1,1,2,G12_1PL_1_1_16,16,173,154.663,151.209
+1,12,control,1,1,2,G12_1PL_1_1_17,17,174,146.726,152.637
+1,12,control,1,1,2,G12_1PL_1_1_18,18,175,149.429,146.394
+1,12,control,1,1,2,G12_1PL_1_1_19,19,176,150.93,152.68
+1,12,control,1,1,2,G12_1PL_1_1_20,20,177,NA,NA
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_1,1,178,159.306,164.263
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_2,2,179,157.801,152.993
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_3,3,180,155.427,158.497
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_4,4,181,153.766,156.119
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_5,5,182,145.514,152.377
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_6,6,183,154.858,159.804
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_1,1,184,160.378,158.276
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_2,2,185,155.727,156.052
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_3,3,186,153.942,156.235
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_4,4,187,145.184,147.016
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_5,5,188,152.571,156.766
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_6,6,189,149.865,156.177
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_7,7,190,156.363,154.386
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_8,8,191,150.773,154.251
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_9,9,192,134.198,131.304
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_10,10,193,146.702,144.547
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_11,11,194,151.473,153.72
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_12,12,195,153.596,156.416
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_13,13,196,147.358,152.344
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_14,14,197,162.632,160.733
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_15,15,198,157.829,153.302
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_1,1,199,157.858,151.041
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_2,2,200,152.995,154.513
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_3,3,201,150.67,148.95
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_4,4,202,145.219,147.111
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_5,5,203,149.011,153.774
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_6,6,204,133.999,136.948
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_7,7,205,155.945,159.84
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_8,8,206,163.101,159.596
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_9,9,207,153.426,157.514
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_10,10,208,158.01,158.436
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_11,11,209,160.315,156.68
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_12,12,210,146.934,147.712
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_13,13,211,154.9,158.056
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_14,14,212,143.974,150.385
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_15,15,213,161.071,164.837
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_16,16,214,152.834,153.527
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_17,17,215,159.076,161.864
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_18,18,216,172.081,173.504
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_19,19,217,158.249,164.837
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_20,20,218,155.312,161.677
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_1,1,219,145.867,141.398
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_2,2,220,152.258,153.64
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_3,3,221,154.378,153.401
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_4,4,222,153.938,150.314
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_5,5,223,156.808,163.929
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_6,6,224,146.716,147.222
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_7,7,225,144.721,146.801
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_8,8,226,149.017,150.889
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_9,9,227,157.086,154.876
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_10,10,228,163.732,161.559
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_11,11,229,152.544,156.473
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_12,12,230,159.502,156.984
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_13,13,231,160.985,154.211
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_14,14,232,168.409,167.457
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_15,15,233,153.702,147.445
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_16,16,234,163.341,160.642
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_17,17,235,156.63,152.887
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_18,18,236,153.383,153.172
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_19,19,237,158.029,160.322
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_20,20,238,154.496,152.451
+3,12,control,1,2,7,G12_3PL_1_14_1,1,239,133.952,131.365
+3,12,control,1,2,7,G12_3PL_1_14_2,2,240,123.536,124.88
+3,12,control,1,2,7,G12_3PL_1_14_3,3,241,151.792,153.344
+3,12,control,1,2,7,G12_3PL_1_14_4,4,242,128.797,130.066
+3,12,control,1,2,7,G12_3PL_1_14_5,5,243,145.327,147.846
+3,12,control,1,2,7,G12_3PL_1_14_6,6,244,137.509,139.74
+3,12,control,1,2,7,G12_3PL_1_14_7,7,245,154.646,156.89
+3,12,control,1,2,7,G12_3PL_1_14_8,8,246,155.001,155.709
+3,12,control,1,2,7,G12_3PL_1_14_9,9,247,133.52,137.561
+3,12,control,1,2,7,G12_3PL_1_14_10,10,248,145.978,146.77
+3,12,control,1,2,7,G12_3PL_1_14_11,11,249,138.439,139.44
+3,12,control,1,2,7,G12_3PL_1_14_12,12,250,131.694,130.66
+3,12,control,1,2,7,G12_3PL_1_14_13,13,251,146.835,153.407
+3,12,control,1,2,7,G12_3PL_1_14_14,14,252,149.782,147.179
+3,12,control,1,2,7,G12_3PL_1_14_15,15,253,138.741,139.664
+3,12,control,1,2,7,G12_3PL_1_14_16,16,254,115.083,113.937
+3,12,control,1,2,7,G12_3PL_1_14_17,17,255,137.16,137.715
+3,12,control,1,2,7,G12_3PL_1_14_18,18,256,151.061,147.714
+3,12,control,1,2,7,G12_3PL_1_14_19,19,257,102.943,106.454
+3,12,control,1,2,7,G12_3PL_1_14_20,20,258,132.661,130.833
+2,12,control,1,2,8,G12_2PL_1_8_1,1,239,135.537,135.605
+2,12,control,1,2,8,G12_2PL_1_8_2,2,240,161.58,155.852
+2,12,control,1,2,8,G12_2PL_1_8_3,3,241,114.928,120.14
+2,12,control,1,2,8,G12_2PL_1_8_4,4,242,135.254,138.439
+2,12,control,1,2,8,G12_2PL_1_8_5,5,243,152.916,149.24
+2,12,control,1,2,8,G12_2PL_1_8_6,6,244,155.319,160.091
+2,12,control,1,2,8,G12_2PL_1_8_7,7,245,153.701,163.993
+2,12,control,1,2,8,G12_2PL_1_8_8,8,246,136.079,136.413
+2,12,control,1,2,8,G12_2PL_1_8_9,9,247,150.275,153.129
+2,12,control,1,2,8,G12_2PL_1_8_10,10,248,165.643,168.155
+2,12,control,1,2,8,G12_2PL_1_8_11,11,249,150.182,151.109
+2,12,control,1,2,8,G12_2PL_1_8_12,12,250,145.022,151.564
+2,12,control,1,2,8,G12_2PL_1_8_13,13,251,150.95,154.223
+2,12,control,1,2,8,G12_2PL_1_8_14,14,252,165.01,162.292
+2,12,control,1,2,8,G12_2PL_1_8_15,15,253,165.612,165.178
+2,12,control,1,2,8,G12_2PL_1_8_16,16,254,144.099,142.383
+2,12,control,1,2,8,G12_2PL_1_8_17,17,255,164.371,158.808
+2,12,control,1,2,8,G12_2PL_1_8_18,18,256,NA,NA
+2,12,control,1,2,8,G12_2PL_1_8_19,19,257,146.166,142.986
+2,12,control,1,2,8,G12_2PL_1_8_20,20,258,158.852,158.411
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_1,1,259,159.247,156.078
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_2,2,260,159.326,159.833
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_3,3,261,150.849,151.722
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_4,4,262,149.189,154.372
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_5,5,263,168.99,169.216
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_6,6,264,142.993,146.793
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_7,7,265,157.634,159.087
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_8,8,266,139.16,155.995
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_9,9,267,156.768,153.508
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_10,10,268,149.709,154.579
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_11,11,269,NA,NA
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_12,12,270,154.638,156.244
+3,12,restricted connectedness,1,2,6,G12_3PS_1_13_13,13,271,155.983,159.087
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_1,1,272,129.898,129.365
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_2,2,273,149.61,151.022
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_3,3,274,163.578,161.542
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_4,4,275,161.431,160.096
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_5,5,276,160.92,155.969
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_6,6,277,149.794,152.132
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_7,7,278,152.946,154.813
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_8,8,279,160.991,164.916
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_9,9,280,163.539,163.699
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_10,10,281,154.428,154.151
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_11,11,282,154.545,158.588
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_12,12,283,162.963,161.892
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_13,13,284,158.413,157.122
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_14,14,285,NA,NA
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_15,15,286,125.554,123.461
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_16,16,287,155.533,156.909
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_17,17,288,150.991,148.65
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_18,18,289,NA,NA
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_19,19,290,125.225,134.283
+2,12,restricted connectedness,2,2,5,G12_2PS_2_12_20,20,291,156.575,158.732
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_1,1,292,141.071,149.583
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_2,2,293,NA,NA
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_3,3,294,135.559,139.331
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_4,4,295,144.629,145.406
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_5,5,296,151.531,156.122
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_6,6,297,149.406,150.036
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_7,7,298,129.993,133.324
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_8,8,299,152.193,155.732
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_9,9,300,149.053,151.044
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_10,10,301,133.571,138.513
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_11,11,302,147.52,154.946
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_12,12,303,149.801,152.125
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_13,13,304,151.814,152.026
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_14,14,305,143.797,147.488
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_15,15,306,160.808,161.495
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_16,16,307,155.894,153.68
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_17,17,308,142.037,144.199
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_18,18,309,149.159,152.021
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_19,19,310,158.386,153.252
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_20,20,311,169.827,168.037
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_21,21,312,151.588,154.04
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_22,22,313,156.566,161.481
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_23,23,314,160.621,164.958
+1,12,restricted connectedness,1,2,9,G12_1PS_1_9_24,24,315,137.974,143.239
+1,12,control,1,1,2,G12_1PL_1_1_1,1,316,157.462,157.632
+1,12,control,1,1,2,G12_1PL_1_1_2,2,317,144.547,144.279
+1,12,control,1,1,2,G12_1PL_1_1_3,3,318,159.875,162.725
+1,12,control,1,1,2,G12_1PL_1_1_4,4,319,NA,NA
+1,12,control,1,1,2,G12_1PL_1_1_5,5,320,164.971,165.111
+1,12,control,1,1,2,G12_1PL_1_1_6,6,321,160.959,165.629
+1,12,control,1,1,2,G12_1PL_1_1_7,7,322,175.44,175.083
+1,12,control,1,1,2,G12_1PL_1_1_8,8,323,143.194,148.85
+1,12,control,1,1,2,G12_1PL_1_1_9,9,324,158.139,162.269
+1,12,control,1,1,2,G12_1PL_1_1_10,10,325,152.386,150.12
+1,12,control,1,1,2,G12_1PL_1_1_11,11,326,149.402,150.49
+1,12,control,1,1,2,G12_1PL_1_1_12,12,327,161.358,163.053
+1,12,control,1,1,2,G12_1PL_1_1_13,13,328,164.866,161.088
+1,12,control,1,1,2,G12_1PL_1_1_14,14,329,143.92,150.894
+1,12,control,1,1,2,G12_1PL_1_1_15,15,330,153.449,155.897
+1,12,control,1,1,2,G12_1PL_1_1_16,16,331,154.663,151.209
+1,12,control,1,1,2,G12_1PL_1_1_17,17,332,146.726,152.637
+1,12,control,1,1,2,G12_1PL_1_1_18,18,333,149.429,146.394
+1,12,control,1,1,2,G12_1PL_1_1_19,19,334,150.93,152.68
+1,12,control,1,1,2,G12_1PL_1_1_20,20,335,NA,NA
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_1,1,336,159.306,164.263
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_2,2,337,157.801,152.993
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_3,3,338,155.427,158.497
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_4,4,339,153.766,156.119
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_5,5,340,145.514,152.377
+2,12,restricted connectedness,3,1,2,G12_2PS_3_1_6,6,341,154.858,159.804
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_1,1,342,160.378,158.276
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_2,2,343,155.727,156.052
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_3,3,344,153.942,156.235
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_4,4,345,145.184,147.016
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_5,5,346,152.571,156.766
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_6,6,347,149.865,156.177
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_7,7,348,156.363,154.386
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_8,8,349,150.773,154.251
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_9,9,350,134.198,131.304
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_10,10,351,146.702,144.547
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_11,11,352,151.473,153.72
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_12,12,353,153.596,156.416
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_13,13,354,147.358,152.344
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_14,14,355,162.632,160.733
+1,12,restricted connectedness,3,1,1,G12_1PS_3_0_15,15,356,157.829,153.302
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_1,1,357,157.858,151.041
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_2,2,358,152.995,154.513
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_3,3,359,150.67,148.95
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_4,4,360,145.219,147.111
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_5,5,361,149.011,153.774
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_6,6,362,133.999,136.948
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_7,7,363,155.945,159.84
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_8,8,364,163.101,159.596
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_9,9,365,153.426,157.514
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_10,10,366,158.01,158.436
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_11,11,367,160.315,156.68
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_12,12,368,146.934,147.712
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_13,13,369,154.9,158.056
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_14,14,370,143.974,150.385
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_15,15,371,161.071,164.837
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_16,16,372,152.834,153.527
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_17,17,373,159.076,161.864
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_18,18,374,172.081,173.504
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_19,19,375,158.249,164.837
+2,12,restricted connectedness,2,1,2,G12_2PS_2_1_20,20,376,155.312,161.677
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_1,1,377,145.867,141.398
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_2,2,378,152.258,153.64
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_3,3,379,154.378,153.401
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_4,4,380,153.938,150.314
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_5,5,381,156.808,163.929
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_6,6,382,146.716,147.222
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_7,7,383,144.721,146.801
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_8,8,384,149.017,150.889
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_9,9,385,157.086,154.876
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_10,10,386,163.732,161.559
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_11,11,387,152.544,156.473
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_12,12,388,159.502,156.984
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_13,13,389,160.985,154.211
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_14,14,390,168.409,167.457
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_15,15,391,153.702,147.445
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_16,16,392,163.341,160.642
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_17,17,393,156.63,152.887
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_18,18,394,153.383,153.172
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_19,19,395,158.029,160.322
+3,12,restricted connectedness,1,1,1,G12_3PS_1_0_20,20,396,154.496,152.451
+3,12,control,1,1,2,G12_3PL_1_1_1,1,397,138.584,132.584
+3,12,control,1,1,2,G12_3PL_1_1_2,2,398,127.498,122.611
+3,12,control,1,1,2,G12_3PL_1_1_3,3,399,146.452,151.183
+3,12,control,1,1,2,G12_3PL_1_1_4,4,400,127.205,127.772
+3,12,control,1,1,2,G12_3PL_1_1_5,5,401,143.552,145.802
+3,12,control,1,1,2,G12_3PL_1_1_6,6,402,136.367,139.976
+3,12,control,1,1,2,G12_3PL_1_1_7,7,403,152.478,157.095
+3,12,control,1,1,2,G12_3PL_1_1_8,8,404,151.519,159.545
+3,12,control,1,1,2,G12_3PL_1_1_9,9,405,130.926,136.492
+3,12,control,1,1,2,G12_3PL_1_1_10,10,406,145.683,145.647
+3,12,control,1,1,2,G12_3PL_1_1_11,11,407,142.662,140.327
+3,12,control,1,1,2,G12_3PL_1_1_12,12,408,128.134,126.813
+3,12,control,1,1,2,G12_3PL_1_1_13,13,409,153.088,148.19
+3,12,control,1,1,2,G12_3PL_1_1_14,14,410,154.57,143.593
+3,12,control,1,1,2,G12_3PL_1_1_15,15,411,139.669,135.235
+3,12,control,1,1,2,G12_3PL_1_1_16,16,412,115.922,113.552
+3,12,control,1,1,2,G12_3PL_1_1_17,17,413,138.812,138.382
+3,12,control,1,1,2,G12_3PL_1_1_18,18,414,147.594,144.823
+3,12,control,1,1,2,G12_3PL_1_1_19,19,415,107.586,104.661
+3,12,control,1,1,2,G12_3PL_1_1_20,20,416,129.569,129.98
+2,12,control,1,1,2,G12_2PL_1_1_1,1,417,160.27,160.046
+2,12,control,1,1,2,G12_2PL_1_1_2,2,418,160.428,155.499
+2,12,control,1,1,2,G12_2PL_1_1_3,3,419,162.043,154.519
+2,12,control,1,1,2,G12_2PL_1_1_4,4,420,164.18,154.639
+2,12,control,1,1,2,G12_2PL_1_1_5,5,421,158.363,153.692
+2,12,control,1,1,2,G12_2PL_1_1_6,6,422,157.149,155.821
+2,12,control,1,1,2,G12_2PL_1_1_7,7,423,150.246,135.381
+2,12,control,1,1,2,G12_2PL_1_1_8,8,424,167.362,167.058
+2,12,control,1,1,2,G12_2PL_1_1_9,9,425,155.457,156.851
+2,12,control,1,1,2,G12_2PL_1_1_10,10,426,164.309,157.366
+2,12,control,1,1,2,G12_2PL_1_1_11,11,427,150.533,149.821
+2,12,control,1,1,2,G12_2PL_1_1_12,12,428,158.859,156.736
+2,12,control,1,1,2,G12_2PL_1_1_13,13,429,153.713,157.943
+2,12,control,1,1,2,G12_2PL_1_1_14,14,430,156.708,155.627
+2,12,control,1,1,2,G12_2PL_1_1_15,15,431,170.845,167.626
+2,12,control,1,1,2,G12_2PL_1_1_16,16,432,162.728,155.105
+2,12,control,1,1,2,G12_2PL_1_1_17,17,433,164.573,166.797
+2,12,control,1,1,2,G12_2PL_1_1_18,18,434,167.364,151.415
+2,12,control,1,1,2,G12_2PL_1_1_19,19,435,157.875,157.156
+2,12,control,1,1,2,G12_2PL_1_1_20,20,436,168.747,161.342
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_1,1,437,130.971,130.761
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_2,2,438,135.98,131.589
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_3,3,439,135.689,136.203
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_4,4,440,136.411,137.757
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_5,5,441,140.273,142.697
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_6,6,442,143.673,143.239
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_7,7,443,137.207,134.637
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_8,8,444,145.603,141.176
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_9,9,445,155.177,154.323
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_10,10,446,139.198,142.631
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_11,11,447,139.562,136.48
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_12,12,448,127.492,129.087
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_13,13,449,131.227,134.052
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_14,14,450,116.026,121.377
+1,12,restricted connectedness,1,1,1,G12_1PS_1_0_15,15,451,144.964,143.756
+1,12,control,1,2,3,G12_1PL_1_10_1,1,452,153,157.297
+1,12,control,1,2,3,G12_1PL_1_10_2,2,453,143.471,143.236
+1,12,control,1,2,3,G12_1PL_1_10_3,3,454,149.771,159.411
+1,12,control,1,2,3,G12_1PL_1_10_4,4,455,154.026,150.234
+1,12,control,1,2,3,G12_1PL_1_10_5,5,456,142.037,148.074
+1,12,control,1,2,3,G12_1PL_1_10_6,6,457,134.83,129.365
+1,12,control,1,2,3,G12_1PL_1_10_7,7,458,150.547,151.533
+1,12,control,1,2,3,G12_1PL_1_10_8,8,459,129.136,129.09
+1,12,control,1,2,3,G12_1PL_1_10_9,9,460,153.03,151.066
+1,12,control,1,2,3,G12_1PL_1_10_10,10,461,138.46,141.045
+1,12,control,1,2,3,G12_1PL_1_10_11,11,462,165.701,162.522
+1,12,control,1,2,3,G12_1PL_1_10_12,12,463,154.808,156.023
+1,12,control,1,2,3,G12_1PL_1_10_13,13,464,151.014,146.274
+1,12,control,1,2,3,G12_1PL_1_10_14,14,465,143.381,148.199
+1,12,control,1,2,3,G12_1PL_1_10_15,15,466,135.389,142.631
+1,12,control,1,2,3,G12_1PL_1_10_16,16,467,149.25,151.619
+1,12,control,1,2,3,G12_1PL_1_10_17,17,468,157.913,153.962
+1,12,control,1,2,3,G12_1PL_1_10_18,18,469,145.123,143.469
+1,12,control,1,2,3,G12_1PL_1_10_19,19,470,155.229,150.575
+1,12,control,1,2,3,G12_1PL_1_10_20,20,471,142.181,137.601
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_1,1,472,165.843,169.992
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_2,2,473,139.418,131.108
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_3,3,474,134.49,130.124
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_4,4,475,140.003,140.198
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_5,5,476,144.181,146.441
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_6,6,477,160.799,161.188
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_7,7,478,143.253,147.805
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_8,8,479,NA,NA
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_9,9,480,120.203,119.744
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_10,10,481,157.43,154.675
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_11,11,482,160.153,151.673
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_12,12,483,153.387,131.486
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_13,13,484,134.072,140.134
+2,12,restricted connectedness,3,2,4,G12_2PS_3_11_14,14,485,139.146,163.109

@@ -1,0 +1,342 @@
+Mix,Treatment,Replicate,Bloc,Location,Generation,Density,Fecundity
+1,stock,stock,1,stock,0,low,48
+1,stock,stock,1,stock,0,low,47
+1,stock,stock,1,stock,0,low,34
+1,stock,stock,1,stock,0,low,38
+1,stock,stock,1,stock,0,low,33
+1,stock,stock,1,stock,0,low,30
+1,stock,stock,1,stock,0,low,42
+1,stock,stock,1,stock,0,low,33
+1,stock,stock,1,stock,0,low,14
+1,stock,stock,1,stock,0,high,26
+1,stock,stock,1,stock,0,high,36
+1,stock,stock,1,stock,0,high,40
+1,stock,stock,1,stock,0,high,24
+1,stock,stock,1,stock,0,high,19
+1,stock,stock,1,stock,0,high,42
+1,stock,stock,1,stock,0,high,25
+1,stock,stock,1,stock,0,high,30
+1,stock,stock,1,stock,0,high,24
+2,stock,stock,1,stock,0,low,39
+2,stock,stock,1,stock,0,low,45
+2,stock,stock,1,stock,0,low,42
+2,stock,stock,1,stock,0,low,38
+2,stock,stock,1,stock,0,low,51
+2,stock,stock,1,stock,0,low,47
+2,stock,stock,1,stock,0,low,62
+2,stock,stock,1,stock,0,low,45
+2,stock,stock,1,stock,0,low,72
+2,stock,stock,1,stock,0,low,34
+2,stock,stock,1,stock,0,high,45
+2,stock,stock,1,stock,0,high,35
+2,stock,stock,1,stock,0,high,59
+2,stock,stock,1,stock,0,high,42
+2,stock,stock,1,stock,0,high,51
+2,stock,stock,1,stock,0,high,68
+2,stock,stock,1,stock,0,high,54
+2,stock,stock,1,stock,0,high,42
+2,stock,stock,1,stock,0,high,40
+2,stock,stock,1,stock,0,high,57
+3,stock,stock,1,stock,0,low,40
+3,stock,stock,1,stock,0,low,34
+3,stock,stock,1,stock,0,low,36
+3,stock,stock,1,stock,0,low,47
+3,stock,stock,1,stock,0,low,40
+3,stock,stock,1,stock,0,low,56
+3,stock,stock,1,stock,0,low,43
+3,stock,stock,1,stock,0,low,57
+3,stock,stock,1,stock,0,low,54
+3,stock,stock,1,stock,0,low,37
+3,stock,stock,1,stock,0,high,18
+3,stock,stock,1,stock,0,high,15
+3,stock,stock,1,stock,0,high,24
+3,stock,stock,1,stock,0,high,44
+3,stock,stock,1,stock,0,high,46
+3,stock,stock,1,stock,0,high,40
+3,stock,stock,1,stock,0,high,45
+3,stock,stock,1,stock,0,high,43
+3,stock,stock,1,stock,0,high,33
+3,stock,stock,1,stock,0,high,33
+1,stock,stock,2,stock,0,low,27
+1,stock,stock,2,stock,0,low,70
+1,stock,stock,2,stock,0,low,51
+1,stock,stock,2,stock,0,low,41
+1,stock,stock,2,stock,0,low,56
+1,stock,stock,2,stock,0,low,30
+1,stock,stock,2,stock,0,low,43
+1,stock,stock,2,stock,0,low,43
+1,stock,stock,2,stock,0,low,41
+1,stock,stock,2,stock,0,low,43
+1,stock,stock,2,stock,0,high,33
+1,stock,stock,2,stock,0,high,49
+1,stock,stock,2,stock,0,high,38
+1,stock,stock,2,stock,0,high,38
+1,stock,stock,2,stock,0,high,48
+1,stock,stock,2,stock,0,high,31
+1,stock,stock,2,stock,0,high,48
+1,stock,stock,2,stock,0,high,63
+1,stock,stock,2,stock,0,high,35
+1,stock,stock,2,stock,0,high,52
+2,stock,stock,2,stock,0,low,47
+2,stock,stock,2,stock,0,low,53
+2,stock,stock,2,stock,0,low,47
+2,stock,stock,2,stock,0,low,60
+2,stock,stock,2,stock,0,low,41
+2,stock,stock,2,stock,0,low,24
+2,stock,stock,2,stock,0,low,49
+2,stock,stock,2,stock,0,low,44
+2,stock,stock,2,stock,0,low,35
+2,stock,stock,2,stock,0,low,45
+2,stock,stock,2,stock,0,high,50
+2,stock,stock,2,stock,0,high,50
+2,stock,stock,2,stock,0,high,36
+2,stock,stock,2,stock,0,high,48
+2,stock,stock,2,stock,0,high,42
+2,stock,stock,2,stock,0,high,54
+2,stock,stock,2,stock,0,high,53
+2,stock,stock,2,stock,0,high,39
+2,stock,stock,2,stock,0,high,47
+2,stock,stock,2,stock,0,high,43
+3,stock,stock,2,stock,0,low,41
+3,stock,stock,2,stock,0,low,28
+3,stock,stock,2,stock,0,low,32
+3,stock,stock,2,stock,0,low,37
+3,stock,stock,2,stock,0,low,38
+3,stock,stock,2,stock,0,low,30
+3,stock,stock,2,stock,0,low,45
+3,stock,stock,2,stock,0,low,30
+3,stock,stock,2,stock,0,low,36
+3,stock,stock,2,stock,0,low,22
+3,stock,stock,2,stock,0,high,50
+3,stock,stock,2,stock,0,high,58
+3,stock,stock,2,stock,0,high,59
+3,stock,stock,2,stock,0,high,62
+3,stock,stock,2,stock,0,high,55
+3,stock,stock,2,stock,0,high,51
+3,stock,stock,2,stock,0,high,52
+3,stock,stock,2,stock,0,high,59
+3,stock,stock,2,stock,0,high,47
+2,control,4,NA,front,14,high,22
+2,control,4,NA,front,14,high,19
+2,control,4,NA,front,14,high,47
+2,control,4,NA,front,14,high,44
+2,control,4,NA,front,14,high,34
+2,control,4,NA,front,14,high,38
+1,control,5,NA,front,14,high,0
+1,control,5,NA,front,14,high,0
+1,control,5,NA,front,14,high,0
+1,control,5,NA,front,14,high,30
+1,control,5,NA,front,14,high,30
+1,control,5,NA,front,14,high,29
+1,control,5,NA,front,14,high,57
+1,control,5,NA,front,14,high,31
+1,control,5,NA,front,14,high,31
+3,restricted connectedness,4,NA,front,14,high,40
+3,restricted connectedness,4,NA,front,14,high,27
+3,restricted connectedness,4,NA,front,14,high,38
+3,restricted connectedness,4,NA,front,14,high,2
+3,restricted connectedness,4,NA,front,14,high,33
+3,restricted connectedness,4,NA,front,14,high,34
+3,restricted connectedness,4,NA,front,14,high,25
+3,restricted connectedness,4,NA,front,14,high,28
+3,restricted connectedness,4,NA,front,14,high,43
+3,restricted connectedness,4,NA,front,14,high,40
+2,control,4,NA,core,14,high,0
+2,control,4,NA,core,14,high,0
+2,control,4,NA,core,14,high,38
+2,control,4,NA,core,14,high,33
+2,control,4,NA,core,14,high,11
+2,control,4,NA,core,14,high,33
+2,control,4,NA,core,14,high,25
+2,control,4,NA,core,14,high,23
+2,control,4,NA,core,14,high,38
+2,control,4,NA,core,14,high,20
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,0
+1,control,5,NA,core,14,high,25
+1,control,5,NA,core,14,high,35
+3,restricted connectedness,4,NA,core,14,high,0
+3,restricted connectedness,4,NA,core,14,high,0
+3,restricted connectedness,4,NA,core,14,high,39
+3,restricted connectedness,4,NA,core,14,high,34
+3,restricted connectedness,4,NA,core,14,high,32
+3,restricted connectedness,4,NA,core,14,high,30
+3,restricted connectedness,4,NA,core,14,high,25
+3,restricted connectedness,4,NA,core,14,high,29
+3,restricted connectedness,4,NA,core,14,high,36
+3,restricted connectedness,4,NA,core,14,high,20
+1,control,5,NA,front,14,low,35
+1,control,5,NA,front,14,low,12
+1,control,5,NA,front,14,low,0
+1,control,5,NA,front,14,low,55
+1,control,5,NA,front,14,low,33
+1,control,5,NA,front,14,low,45
+1,control,5,NA,front,14,low,43
+1,control,5,NA,front,14,low,38
+1,control,5,NA,front,14,low,0
+1,control,5,NA,front,14,low,34
+2,control,4,NA,front,14,low,27
+2,control,4,NA,front,14,low,23
+2,control,4,NA,front,14,low,32
+2,control,4,NA,front,14,low,22
+2,control,4,NA,front,14,low,33
+2,control,4,NA,front,14,low,15
+2,control,4,NA,front,14,low,28
+2,control,4,NA,front,14,low,31
+2,control,4,NA,front,14,low,17
+2,control,4,NA,front,14,low,33
+3,restricted connectedness,4,NA,front,14,low,45
+3,restricted connectedness,4,NA,front,14,low,25
+3,restricted connectedness,4,NA,front,14,low,29
+3,restricted connectedness,4,NA,front,14,low,0
+3,restricted connectedness,4,NA,front,14,low,23
+3,restricted connectedness,4,NA,front,14,low,25
+3,restricted connectedness,4,NA,front,14,low,35
+3,restricted connectedness,4,NA,front,14,low,18
+3,restricted connectedness,4,NA,front,14,low,31
+3,restricted connectedness,4,NA,front,14,low,49
+1,control,5,NA,core,14,low,25
+1,control,5,NA,core,14,low,42
+1,control,5,NA,core,14,low,33
+1,control,5,NA,core,14,low,35
+1,control,5,NA,core,14,low,27
+1,control,5,NA,core,14,low,40
+1,control,5,NA,core,14,low,44
+1,control,5,NA,core,14,low,41
+1,control,5,NA,core,14,low,34
+1,control,5,NA,core,14,low,27
+2,control,4,NA,core,14,low,36
+2,control,4,NA,core,14,low,23
+2,control,4,NA,core,14,low,36
+2,control,4,NA,core,14,low,42
+2,control,4,NA,core,14,low,33
+2,control,4,NA,core,14,low,7
+2,control,4,NA,core,14,low,29
+2,control,4,NA,core,14,low,21
+2,control,4,NA,core,14,low,27
+2,control,4,NA,core,14,low,44
+3,restricted connectedness,4,NA,core,14,low,30
+3,restricted connectedness,4,NA,core,14,low,33
+3,restricted connectedness,4,NA,core,14,low,38
+3,restricted connectedness,4,NA,core,14,low,36
+3,restricted connectedness,4,NA,core,14,low,38
+3,restricted connectedness,4,NA,core,14,low,39
+3,restricted connectedness,4,NA,core,14,low,34
+3,restricted connectedness,4,NA,core,14,low,38
+3,restricted connectedness,4,NA,core,14,low,37
+3,restricted connectedness,4,NA,core,14,low,36
+1,restricted connectedness,6,NA,front,14,high,34
+1,restricted connectedness,6,NA,front,14,high,41
+1,restricted connectedness,6,NA,front,14,high,26
+1,restricted connectedness,6,NA,front,14,high,25
+2,restricted connectedness,6,NA,front,14,high,42
+2,restricted connectedness,6,NA,front,14,high,30
+2,restricted connectedness,6,NA,front,14,high,32
+2,restricted connectedness,6,NA,front,14,high,42
+2,restricted connectedness,6,NA,front,14,high,36
+2,restricted connectedness,6,NA,front,14,high,27
+2,restricted connectedness,6,NA,front,14,high,45
+2,restricted connectedness,6,NA,front,14,high,33
+2,restricted connectedness,6,NA,front,14,high,40
+2,restricted connectedness,6,NA,front,14,high,39
+3,control,5,NA,front,14,high,0
+3,control,5,NA,front,14,high,0
+3,control,5,NA,front,14,high,0
+3,control,5,NA,front,14,high,12
+3,control,5,NA,front,14,high,40
+3,control,5,NA,front,14,high,32
+3,control,5,NA,front,14,high,15
+3,control,5,NA,front,14,high,35
+3,control,5,NA,front,14,high,31
+3,control,5,NA,front,14,high,14
+1,restricted connectedness,6,NA,core,14,high,23
+1,restricted connectedness,6,NA,core,14,high,36
+1,restricted connectedness,6,NA,core,14,high,19
+1,restricted connectedness,6,NA,core,14,high,14
+1,restricted connectedness,6,NA,core,14,high,19
+2,restricted connectedness,6,NA,core,14,high,32
+2,restricted connectedness,6,NA,core,14,high,0
+2,restricted connectedness,6,NA,core,14,high,0
+2,restricted connectedness,6,NA,core,14,high,33
+2,restricted connectedness,6,NA,core,14,high,0
+2,restricted connectedness,6,NA,core,14,high,27
+2,restricted connectedness,6,NA,core,14,high,33
+2,restricted connectedness,6,NA,core,14,high,24
+2,restricted connectedness,6,NA,core,14,high,37
+2,restricted connectedness,6,NA,core,14,high,44
+3,control,5,NA,core,14,high,0
+3,control,5,NA,core,14,high,0
+3,control,5,NA,core,14,high,0
+3,control,5,NA,core,14,high,35
+3,control,5,NA,core,14,high,27
+3,control,5,NA,core,14,high,39
+3,control,5,NA,core,14,high,47
+3,control,5,NA,core,14,high,32
+3,control,5,NA,core,14,high,34
+3,control,5,NA,core,14,high,49
+3,control,5,NA,core,14,low,47
+3,control,5,NA,core,14,low,37
+3,control,5,NA,core,14,low,45
+3,control,5,NA,core,14,low,30
+3,control,5,NA,core,14,low,0
+3,control,5,NA,core,14,low,27
+3,control,5,NA,core,14,low,31
+3,control,5,NA,core,14,low,36
+3,control,5,NA,core,14,low,32
+3,control,5,NA,core,14,low,38
+1,restricted connectedness,6,NA,core,14,low,27
+1,restricted connectedness,6,NA,core,14,low,33
+1,restricted connectedness,6,NA,core,14,low,34
+1,restricted connectedness,6,NA,core,14,low,20
+1,restricted connectedness,6,NA,core,14,low,32
+1,restricted connectedness,6,NA,core,14,low,41
+1,restricted connectedness,6,NA,core,14,low,28
+1,restricted connectedness,6,NA,core,14,low,30
+1,restricted connectedness,6,NA,core,14,low,46
+1,restricted connectedness,6,NA,core,14,low,41
+2,restricted connectedness,6,NA,core,14,low,44
+2,restricted connectedness,6,NA,core,14,low,42
+2,restricted connectedness,6,NA,core,14,low,43
+2,restricted connectedness,6,NA,core,14,low,44
+2,restricted connectedness,6,NA,core,14,low,34
+2,restricted connectedness,6,NA,core,14,low,40
+2,restricted connectedness,6,NA,core,14,low,22
+2,restricted connectedness,6,NA,core,14,low,44
+2,restricted connectedness,6,NA,core,14,low,36
+2,restricted connectedness,6,NA,core,14,low,37
+3,control,5,NA,front,14,low,22
+3,control,5,NA,front,14,low,35
+3,control,5,NA,front,14,low,43
+3,control,5,NA,front,14,low,29
+3,control,5,NA,front,14,low,30
+3,control,5,NA,front,14,low,28
+3,control,5,NA,front,14,low,29
+3,control,5,NA,front,14,low,27
+3,control,5,NA,front,14,low,46
+3,control,5,NA,front,14,low,33
+1,restricted connectedness,6,NA,front,14,low,37
+1,restricted connectedness,6,NA,front,14,low,37
+1,restricted connectedness,6,NA,front,14,low,38
+1,restricted connectedness,6,NA,front,14,low,0
+1,restricted connectedness,6,NA,front,14,low,42
+1,restricted connectedness,6,NA,front,14,low,41
+1,restricted connectedness,6,NA,front,14,low,30
+1,restricted connectedness,6,NA,front,14,low,51
+1,restricted connectedness,6,NA,front,14,low,27
+1,restricted connectedness,6,NA,front,14,low,15
+2,restricted connectedness,6,NA,front,14,low,14
+2,restricted connectedness,6,NA,front,14,low,33
+2,restricted connectedness,6,NA,front,14,low,38
+2,restricted connectedness,6,NA,front,14,low,34
+2,restricted connectedness,6,NA,front,14,low,26
+2,restricted connectedness,6,NA,front,14,low,26
+2,restricted connectedness,6,NA,front,14,low,41
+2,restricted connectedness,6,NA,front,14,low,39
+2,restricted connectedness,6,NA,front,14,low,28
+2,restricted connectedness,6,NA,front,14,low,31
