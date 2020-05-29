@@ -109,6 +109,39 @@ data_popsize<-data_popsize %>% filter(Patch>0) %>%
 
 ```
 
+
+
+```{r}
+
+mod_popsize <- brm(bf(Peggs_est~logit(K-(K-M0)*exp(-r*time_since_founding))+obs,
+                      nlf(K~inv_logit(logitK)),
+                      nlf(M0~inv_logit(logitM0)),
+                      nlf(r~10^log10r),
+                      logitK~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
+                      logitM0~0+Treatment+Treatment:scale(dist_to_front_prev)+(1|Mix)+(scale(dist_to_front_prev)|1|landscapeID)+(scale(dist_to_front_prev)|2|landscapeID:Patch),
+                      log10r~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),obs~0+(1|Macro)+(1|spacetimeID),
+                      nlf(phi~10^log10phi),
+                      log10phi~1,
+                      nl=TRUE),
+                   data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
+                   iter=100,warmup=50,chains=2,
+                   prior=c(
+                       set_prior("normal(0,1.5)",class="b",nlpar=c("logitK","logitM0","log10r")),
+                       set_prior("normal(0,1)",class="sd",nlpar=c("logitK","logitM0","log10r","obs")),
+                       set_prior("normal(0,1.5)",class="b",nlpar="log10phi")
+                   ),
+                   control=list(adapt_delta=0.8),seed=42)
+```
+
+
+
+
+
+
+
+
+
+
 ```{r}
 #monomolecular: y = K-(K-M0)*exp(-r*distance_from_front)
 #3par logistic y = M0*K/(M0+(K-M0)*exp(-r*distance_from_front))
