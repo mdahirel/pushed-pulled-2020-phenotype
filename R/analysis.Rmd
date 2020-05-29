@@ -1,0 +1,434 @@
+---
+title: "Untitled"
+author: "Maxime Dahirel"
+date: "19/05/2020"
+output: 
+  html_document:
+    theme: yeti
+    toc: TRUE
+    toc_float: TRUE
+    code_download: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+library(coda)
+library(rstan)
+library(bayesplot)
+library(brms)
+rstan_options(auto_write = TRUE)
+#options(mc.cores = 2) #temporary unparallel to view progress in console rather than viewer to avoid viewer bug in new rstudio preview
+library(brms)
+
+library(tidybayes)
+
+
+library(patchwork)
+
+library(here)
+```
+
+# Context
+
+
+#load data
+
+```{r}
+
+raw_dynamics <- read_csv(here("data","expansion_data","Trichogramma_dynamics.csv"))
+
+raw_size <- read_csv(here("data","exp1_bodysize.csv"))
+
+raw_mvt <- read_csv(here("data","exp2_movement.csv"))
+
+raw_fec <- read_csv(here("data","exp2_fecundity.csv"))
+raw_disp <- read_csv(here("data","exp2_dispersal.csv"))
+
+raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
+raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
+```
+
+#Population density (reprisal)
+
+```{r}
+data_popsize<- raw_dynamics %>% 
+  mutate(Mix= as.numeric(str_sub(Image,1,1)),
+         Treatment = str_sub(Image,2,3),
+         Replicate = as.numeric(str_sub(Image,4,4)),
+         Patch = as.numeric(str_sub(Image,6,7))
+  ) %>% 
+  #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
+#or digit-digit (patches 10 and beyond)
+## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
+  mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
+         spacetimeID=paste(landscapeID,"_Generation",Generation,"_Patch",Patch,sep=""), # a unique ID for each replicate x patch x generation combination
+         Mix = factor(Mix)) %>% 
+  mutate(pixtot=P+H) %>% 
+  mutate(Treatment = fct_recode(Treatment,`control`="PL",`restricted connectedness`="PS")) %>% 
+  group_by(landscapeID,Generation) %>% 
+  mutate(front=max(Patch)) %>% 
+  ungroup() %>% 
+  group_by(landscapeID,Patch) %>% 
+  mutate(founding_time=min(Generation)) %>% 
+  ungroup() %>% 
+  mutate(distance_from_front=front-Patch,
+         time_since_founding=Generation-founding_time) %>% 
+  select(Macro,landscapeID,Patch,Generation,Treatment,distance_from_front,Peggs_est,Mix,front,pixtot,time_since_founding,founding_time)
+
+front_prev<-data_popsize %>% 
+  select(landscapeID,Generation,front) %>% 
+  distinct() %>% 
+  group_by(landscapeID) %>%
+  arrange(Generation) %>% 
+  mutate(front_prev=lag(front)) %>% 
+  mutate(front_prev=replace_na(front_prev,0)) 
+
+data_popsize<-data_popsize %>% filter(Patch>0) %>% 
+  select(landscapeID,Patch,Generation) %>% 
+  distinct() %>% #remove macro induced quadruplicates
+  left_join(.,front_prev) %>% 
+  group_by(landscapeID,Patch) %>% 
+  filter(Generation==min(Generation)) %>% 
+  mutate(dist_to_front_prev=Patch-front_prev) %>% #<0 in few cases; patches "passed over" during colonisation, then gap colonised later
+  ungroup() %>%
+  select(landscapeID,Patch,dist_to_front_prev) %>% 
+  left_join(data_popsize,.) %>% filter(Patch>0) %>% 
+  mutate(scale_Generation=scale(Generation)) %>% 
+  mutate(spacetimeID=paste(landscapeID,Generation,Patch)) %>% 
+  ungroup()
+
+##to do : how to manage extinct-then-recolonised patches?
+
+```
+
+```{r}
+#monomolecular: y = K-(K-M0)*exp(-r*distance_from_front)
+#3par logistic y = M0*K/(M0+(K-M0)*exp(-r*distance_from_front))
+#gompertz y = K*(M0/K)^(exp(-r*distance_from_front))
+#taken from paine et al 2012 MEE
+
+mod_popsize <- brm(bf(Peggs_est~logit(K-(K-M0)*exp(-r*distance_from_front))+obs,
+                      nlf(K~inv_logit(logitK)),
+                      nlf(M0~inv_logit(logitM0)),
+                      nlf(r~10^log10r),
+                      logitK~scale_Generation*Treatment+(1|Mix)+(1|Macro)+(scale_Generation|1|landscapeID),
+                      logitM0~(scale_Generation*Treatment):new_front+(1|Mix)+(1|Macro)+(scale_Generation*new_front|1|landscapeID),
+                      log10r~(scale_Generation*Treatment):new_front+(1|Mix)+(1|Macro)+(scale_Generation*new_front|1|landscapeID),
+                      nlf(phi~10^log10phi),
+                      log10phi~(1|Macro),
+                      obs~0+(1|Macro)+(1|spacetimeID),
+                      nl=TRUE),
+        data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
+        iter=350,warmup=150,chains=2,
+        prior=c(
+          set_prior("normal(0,1.5)",class="b",nlpar=c("logitK","logitM0","log10r")),
+          set_prior("normal(0,1)",class="sd",nlpar=c("logitK","logitM0","log10r")),
+          set_prior("normal(0,1)",class="sd",nlpar="obs"),
+          set_prior("normal(0,1.5)",class="b",nlpar="log10phi"),
+          set_prior("normal(0,1)",class="sd",nlpar="log10phi")
+        ),
+        control=list(adapt_delta=0.8),seed=42)
+```
+
+testing something 
+try the logit(y)~logit(formula),family=student trick again?
+try phi being nonlinear the same way asmu?
+
+```{r}
+
+mod_popsize <- brm(bf(Peggs_est~logit(K-(K-M0)*exp(-r*time_since_founding))+obs,
+                      nlf(K~inv_logit(logitK)),
+                      nlf(M0~inv_logit(logitM0)),
+                      nlf(r~10^log10r),
+                      logitK~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
+                      logitM0~0+Treatment*scale(dist_to_front_prev)+(1|Mix)+(1|1|landscapeID)+(scale(dist_to_front_prev)|2|landscapeID:Patch),
+                      log10r~0+Treatment*scale(dist_to_front_prev)+(1|Mix)+(1|1|landscapeID)+(scale(dist_to_front_prev)|2|landscapeID:Patch),obs~0+(1|Macro)+(1|spacetimeID),
+                      nlf(phi~10^log10phi),
+                      log10phi~1,
+                      nl=TRUE),
+                   data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
+                   iter=200,warmup=100,chains=2,
+                   prior=c(
+                       set_prior("normal(0,1.5)",class="b",nlpar=c("logitK","logitM0","log10r")),
+                       set_prior("normal(0,1)",class="sd",nlpar=c("logitK","logitM0","log10r","obs")),
+                       set_prior("normal(0,1.5)",class="b",nlpar="log10phi")
+                   ),
+                   control=list(adapt_delta=0.8),seed=42)
+```
+
+
+```{r}
+data_popsize2<-data_popsize %>% 
+  filter(Patch ==front | Patch==0) %>% 
+  mutate(Location=ifelse(Patch==0,"core",paste("front",new_front))) %>% 
+  mutate(Location=fct_recode(factor(Location),`new_front`="front TRUE",`old_front`="front FALSE"))
+```
+
+```{r}
+#linear version
+
+mod_popsize <- brm(bf(Peggs_est~0+Location:Treatment+Location:Treatment:scale_Generation+(1|Macro)+(1|Mix/landscapeID/spacetimeID),
+                      nlf(phi~1/invphi),
+                      invphi~1),
+        data=data_popsize2,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
+        iter=350,warmup=150,chains=2,
+        prior=c(
+          set_prior("normal(0,1.5)",class="b"),
+          set_prior("normal(0,1)",class="sd"),
+          set_prior("normal(0,1)",nlpar="invphi",lb=0)
+          ),
+        control=list(adapt_delta=0.8),seed=42)
+```
+
+═not much new compared to suppl of 1st manuscript. Not mention it, send reader back to 1st manuscript to justify higher pop sizes in restr conn? (what about diff core/front to justify the experimental low/high? we can do without at least in first round, not a perfect match anyway)
+
+```{r}
+data_popsize %>% ungroup() %>% 
+  mutate(Macro=Macro[1],landscapeID=landscapeID[1],Generation=Generation[1]) %>% 
+  select(Macro,landscapeID,Generation,Treatment) %>% 
+  distinct() %>% 
+  expand_grid(distance_from_front=c(0:20)) %>% 
+  add_fitted_draws(mod_popsize,re_formula = NA) %>% 
+  ggplot() +
+  stat_lineribbon(aes(x=distance_from_front,y=.value))+facet_wrap(~Treatment)
+```
+
+
+# Body size
+
+```{r}
+data_size<-raw_size %>%
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(IDindiv=paste(IDpop,ID_in_batch,sep="_")) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
+                mutate(is.obsA=-0.5+1*(observer=="tibia_obsA"))
+
+```
+
+use of nested hieracrhic groups to reflect phylogenetic relationships among pop taken from 
+
+```{r}
+mod_size=brm(bf(scale(tibia)~0+trt+is.obsA+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=trt))),
+        data=data_size,
+        chains=4,iter=2000,
+        prior=c(set_prior("normal(0,1)",class="b"),
+                set_prior("normal(0,1)",class="sigma"),
+                set_prior("normal(0,1)",class="sd")),
+        seed=42
+)
+
+```
+
+shifts mostly in variance. Looks negatively correlated with population density on aevrage in each category (though no way to be sure without stock densities)
+read on effect of competition on size both plastic and selective
+
+
+find a way to model the among-pop variance as one main variance pop + 1 dirichelt something to split in mix, group, pop???
+possible??
+# Activity
+
+```{r}
+data_mvt<-raw_mvt %>% 
+                filter(Generation %in% c(0,10)) %>% 
+                filter(timestamp<=300) %>% ##some replicate are filmed longer than the nominal 5 minutes, this removes their ends to standardize
+                mutate(Nobs=substr(File,nchar(File)-1,nchar(File))) %>% #note: rerecord correctly #wrong for G4 for which not given and last code is testing unit
+                mutate(Nobs=as.numeric(str_remove(Nobs,"_"))) %>%  ##but we don't do G4 anyway, soooo
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(IDtest=paste(IDpop,testing_unit,sep="_")) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                group_by(Mix,Treatment,Generation,Replicate,Location,IDgroup,IDpop,IDtest,trt) %>% 
+                summarise(percentData=mean(percentData), ##this column is already a testing_unit- level variable
+                          activity_time=sum(path_duration*activity_percent),
+                          obs_time=sum(path_duration),
+                          Nobs=mean(Nobs)) %>% 
+                mutate(activity_percent=activity_time/obs_time) %>% 
+  ungroup()
+```
+
+
+```{r}
+mod_mvt=brm(bf(activity_percent~0+trt+(1|Mix/IDgroup/IDpop),
+               nlf(phi~10^log10phi),
+               log10phi~percentData),
+        data=data_mvt,family=Beta,
+        chains=4,iter=2000,
+        prior=c(set_prior("normal(0,1.5)",class="b"),
+                set_prior("normal(0,1)",class="sd"),
+                set_prior("normal(0,1)",class="b",nlpar="log10phi")),
+        seed=42
+)
+
+```
+
+# Fecundity 1
+
+```{r}
+data_fec<-raw_fec %>% 
+                filter(Generation %in% c(0,12)) %>%
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock"))
+```
+
+
+```{r}
+mod_fec=brm(bf(Fecundity~0+trt+(1|Mix/IDgroup/IDpop),
+            zi~0+trt+(1|Mix/IDgroup/IDpop),
+            nlf(shape~1/invshape),invshape~1),
+         data=data_fec,family=zero_inflated_negbinomial(link_shape="identity"), #or hurdle?? think about it
+         chains=4,iter=2000,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"),
+                 set_prior("normal(0,1.5)",class="b",dpar="zi"),
+                 set_prior("normal(0,1)",class="sd",dpar="zi"),
+                 set_prior("normal(0,1)",nlpar="invshape",lb=0))
+)
+```
+
+# Dispersal 1
+```{r}
+data_disp<-raw_disp %>% 
+                filter(Generation %in% c(0,12)) %>%
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
+                mutate(Neggs_all_scaled=scale(Neggs_all))
+```
+
+
+```{r}
+mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+         data=data_disp,family=binomial,
+         chains=4,iter=200,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"))
+)
+```
+
+loo/kfold to compare to version with no Neggs_scaled? seems to work (both here and density) but need to recheck because pareto bad obs
+
+```{r}
+mod_disp_fec=brm(bf(Neggs_all~0+trt+(1|Mix/IDgroup/IDpop)),
+         data=data_disp,family=negbinomial,
+         chains=4,iter=200,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"))
+)
+```
+
+
+# Fecundity 2
+```{r}
+data_fec_dens<-raw_fec_dens %>% 
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock"))%>% 
+                mutate(Density_centred=-0.5+1*(Density=="high"))
+```
+
+
+```{r}
+mod_fec_dens=brm(bf(Fecundity~0+trt*Density_centred+(1|Mix/IDgroup/IDpop),
+            zi~0+trt*Density_centred+(1|Mix/IDgroup/IDpop),
+            nlf(shape~1/invshape),invshape~1),
+         data=data_fec_dens,family=zero_inflated_negbinomial(link_shape = "identity"),
+         chains=4,iter=200,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"),
+                 set_prior("normal(0,1.5)",class="b",dpar="zi"),
+                 set_prior("normal(0,1)",class="sd",dpar="zi"),
+                 set_prior("normal(0,1)",nlpar="invshape",lb=0))
+)
+```
+# Dispersal 2
+
+```{r}
+data_disp_dens<-raw_disp_dens %>% 
+                mutate(IDgroup=ifelse(Generation==0,
+                                      paste("Mix",Mix,"_stock",sep=""),
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      )
+                       )%>% 
+                mutate(IDpop=ifelse(Generation==0,
+                                    IDgroup,
+                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
+                mutate(trt=paste(Treatment,Location)) %>% 
+                mutate(trt=relevel(factor(trt),"stock stock")) %>%
+                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
+                mutate(Neggs_all_scaled=scale(Neggs_all)) %>% 
+                mutate(Neggs_all_log=log(Neggs_all)) %>% 
+                mutate(Density_centred=-0.5+1*(Density=="high"))
+```
+
+
+```{r}
+mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt*Density_centred+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+         data=data_disp_dens,family=binomial,
+         chains=4,iter=200,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"))
+)
+```
+
+
+```{r}
+mod_disp_dens_fec=brm(bf(Neggs_all~0+trt*Density_centred+(1|Mix/IDgroup/IDpop)),
+         data=data_disp_dens,family=negbinomial,
+         chains=4,iter=200,
+         prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="sd"))
+)
+```

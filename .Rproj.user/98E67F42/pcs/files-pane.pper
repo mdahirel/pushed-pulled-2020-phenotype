@@ -1,9 +1,9 @@
 {
-    "path" : "D:/Maxime/Documents/RECHERCHE/2019_now_POSTDOC INRA SOPHIA/manuscrit 2 _ phenotypic changes during expansions/pushed-pulled-2020-phenotype",
-    "sortOrder" : [
+    "path": "D:/Maxime/Documents/RECHERCHE/2019_now_POSTDOC INRA SOPHIA/manuscrit 2 _ phenotypic changes during expansions/pushed-pulled-2020-phenotype",
+    "sortOrder": [
         {
-            "ascending" : true,
-            "columnIndex" : 2
+            "columnIndex": 2,
+            "ascending": true
         }
     ]
 }
