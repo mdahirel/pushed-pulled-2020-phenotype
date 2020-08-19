@@ -17,13 +17,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+library(arm)
 library(tidyverse)
 
 library(rstan)
 library(bayesplot)
 library(brms)
 rstan_options(auto_write = TRUE)
-#options(mc.cores = 2) #temporary unparallel to view progress in console rather than viewer to avoid viewer bug in new rstudio preview
+options(mc.cores = 2) #temporary unparallel to view progress in console rather than viewer to avoid viewer bug in new rstudio preview
 library(brms)
 
 library(tidybayes)
@@ -88,7 +89,7 @@ data_popsize<- raw_dynamics %>%
   #an indicator to say if the patch was first founded from behind the previous front, instead of by the front advance
   #filter(is.passed.over==0) %>% 
   ungroup() %>%
-  select(Macro,landscapeID,Patch,Generation,Treatment,obsID,Peggs_est,Mix,time_since_founding)
+  dplyr::select(Macro,landscapeID,Patch,Generation,Treatment,obsID,Peggs_est,Mix,time_since_founding,founding_generation)
 
 ##to do : count local extinction and count "passed over"; maybe actually include them if too big ????
 
@@ -98,30 +99,27 @@ data_popsize<- raw_dynamics %>%
 
 ```{r}
 
-#monomolecular: y = K-(K-F)*exp(-r*time_since_founding)
-#3par logistic y = F*K/(F+(K-F)*exp(-r*time_since_founding))
-#gompertz y = K*(F/K)^(exp(-r*time_since_founding))
-#taken from paine et al 2012 MEE
-
 mod_popsize <- brm(bf(Peggs_est~unobservedtrue+obsprocess,
                       nlf(unobservedtrue~trend+residuals),
-                      nlf(trend~logit(K-(K-F)*exp(-r*time_since_founding))),
+                      #nlf(trend~logit(K-(K-F)*exp(-r*time_since_founding))), #monomolecular version
+                      nlf(trend~logit(F*K/(F+(K-F)*exp(-r*time_since_founding)))), #3par logistic version
+                      #nlf(trend~logit(K*(F/K)^(exp(-r*time_since_founding)))), #gompertz version (all from paine et al 2012 MEE)
                       nlf(K~inv_logit(logitK)),
                       nlf(F~inv_logit(logitF)),
                       nlf(r~exp(logr)),
-                      logitK~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
-                      logitF~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
-                      logr~0+Treatment+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
+                      logitK~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
+                      logitF~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
+                      logr~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
                       nlf(phi~1/invphi),
                       invphi~1,
                       residuals~0+(1|gr(obsID,by=Treatment)),
                       obsprocess~0+(1|Macro),
                       nl=TRUE),
                    data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
-                   iter=60,warmup=30,chains=2,
+                   iter=100,warmup=50,chains=2,
                    prior=c(
                        set_prior("normal(0,1.5)",class="b",nlpar=c("logitK","logitF")),
-                       set_prior("normal(1,1)",class="b",nlpar=c("logr")),
+                       set_prior("normal(0,1)",class="b",nlpar=c("logr")), ##move to default 0,1? less narrow on charact time scale?
                        set_prior("normal(0,1)",class="sd",nlpar=c("logitK","logitF","logr","residuals","obsprocess")),
                        set_prior("normal(0,1)",class="b",nlpar="invphi",lb=0),
                        set_prior("lkj(2)",class="cor")
@@ -131,6 +129,10 @@ mod_popsize <- brm(bf(Peggs_est~unobservedtrue+obsprocess,
 ##distance to the nearest patch and/or size of the nearest patch to M0??
 ## keep the last gen in the dataset (borrowing info good enough for trend?)
 ```
+idea: use posterior K and resid variance to estimate alpha at equilibrium???
+but may be a lot of work to get all the pieces for the beta dist??
+but important to express variance in abs scale
+but we're saved because connectedness increase K but decrease var, so would decrease var/K even more anyway, no need to calculate
 
 ```{r}
 ppc_ribbon(yrep=predict(mod_popsize,summary=FALSE),
@@ -195,15 +197,53 @@ data_size<-raw_size %>%
 use of nested hieracrhic groups to reflect phylogenetic relationships among pop taken from 
 
 ```{r}
-mod_size=brm(bf(scale(tibia)~0+trt+is.obsA+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=trt))),
+mod_size=brm(bf(scale(tibia)~0+trt+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=trt))),
         data=data_size,
-        chains=4,iter=2000,
+        chains=4,iter=4000,
         prior=c(set_prior("normal(0,1)",class="b"),
                 set_prior("normal(0,1)",class="sigma"),
                 set_prior("normal(0,1)",class="sd")),
-        seed=42
+        seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
 )
 
+postSD <- posterior_samples(mod_size) %>% select(contains("sd_IDindiv_")) %>%  `*` (sd(data_size$tibia,na.rm=TRUE))%>% 
+  as_tibble() %>% 
+  mutate(.draw=1:dim(.)[1]) %>% pivot_longer(cols=-.draw) %>%  
+  mutate(Location=case_when(str_detect(name,"stock")~"stock",
+                            str_detect(name,"core")~"core",
+                            str_detect(name,"front")~"front"),
+         Treatment=case_when(str_detect(name,"stock")~"stock",
+                            str_detect(name,"control")~"control",
+                            str_detect(name,"restricted")~"restricted connectedness")
+  ) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  select(.draw,sd=value,Treatment,Location)
+
+postmeans <- data_size %>% 
+  select(trt,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  unique() %>% 
+  add_fitted_draws(mod_size,re_formula = NA) %>% 
+  ungroup() %>% 
+  mutate(mean=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
+  select(.draw,mean,Treatment,Location)
+
+p1<-ggplot(postmeans) +
+  stat_eye(aes(x=Location,y=mean))+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Mean body size (tibia length)")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p2<-postmeans %>% left_join(postSD) %>% ungroup() %>% mutate(cv=sd/mean) %>%
+  ggplot()+
+  stat_eye(aes(x=Location,y=cv))+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Within-population CV")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p1/p2
 ```
 
 shifts mostly in variance. Looks negatively correlated with population density on aevrage in each category (though no way to be sure without stock densities)
@@ -243,15 +283,27 @@ data_mvt<-raw_mvt %>%
 
 ```{r}
 mod_mvt=brm(bf(activity_percent~0+trt+(1|Mix/IDgroup/IDpop),
-               nlf(phi~10^log10phi),
-               log10phi~percentData),
+               nlf(phi~1/invphi),
+               invphi~1),
         data=data_mvt,family=Beta,
-        chains=4,iter=2000,
+        chains=4,iter=4000,
         prior=c(set_prior("normal(0,1.5)",class="b"),
                 set_prior("normal(0,1)",class="sd"),
-                set_prior("normal(0,1)",class="b",nlpar="log10phi")),
-        seed=42
+                set_prior("normal(0,1)",nlpar="invphi",lb=0)),
+        seed=42,control=list(adapt_delta=0.99)
 )
+
+##no differences among treatments
+posterior_samples(mod_mvt) %>% select(contains("b_trt")) %>%
+  mutate(.iteration=1:dim(.)[1]) %>% 
+  pivot_longer(cols=-.iteration) %>%  
+  compare_levels(value,by=name) %>% 
+  ggplot()+stat_eye(aes(y=name,x=value))+geom_vline(xintercept = 0)
+
+
+#posterior grand mean
+posterior_samples(mod_mvt) %>% select(contains("b_trt")) %>% mutate(grandmean=rowMeans(.)) %>% 
+  mean_hdi(invlogit(grandmean))
 
 ```
 
@@ -272,41 +324,37 @@ data_fec<-raw_fec %>%
                 mutate(trt=paste(Treatment,Location)) %>% 
                 mutate(trt=relevel(factor(trt),"stock stock")) %>%
                 mutate(trt=fct_recode(trt,stock="stock stock"))
+
+data_fec$obsID=1:dim(data_fec)[1]
 ```
 
 
 ```{r}
-mod_fec=brm(bf(Fecundity~0+trt+(1|Mix/IDgroup/IDpop),
-            zi~0+trt+(1|Mix/IDgroup/IDpop),
-            nlf(shape~1/invshape),
-            invshape~1),
-         data=data_fec,family=zero_inflated_negbinomial(link_shape="identity"), #or hurdle?? think about it
-         chains=4,iter=2000,
-         prior=c(set_prior("normal(0,1.5)",class="b"),
-                 set_prior("normal(0,1)",class="sd"),
-                 set_prior("normal(0,1.5)",class="b",dpar="zi"),
-                 set_prior("normal(0,1)",class="sd",dpar="zi"),
-                 set_prior("normal(0,1)",nlpar="invshape",lb=0))
-)
-```
-
-
-```{r}
-### more accurate wrt protocol ## do the same for the DD version
-data_fec$IDobs=1:length(data_fec$Mix)
-
-mod_fec=brm(bf(Fecundity|trials(90)~0+trt+(1|Mix/IDgroup/IDpop)+(1|IDobs),
+mod_fec=brm(bf(Fecundity|trials(90)~0+trt+(1|Mix/IDgroup/IDpop)+(1|obsID),
             zi~0+trt+(1|Mix/IDgroup/IDpop)),
          data=data_fec,family=zero_inflated_binomial(), #or hurdle?? think about it
-         chains=4,iter=2000,
+         chains=4,iter=100,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
-                 set_prior("normal(0,1)",class="sd",dpar="zi"))
+                 set_prior("normal(0,1)",class="sd",dpar="zi")),
+         seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
 )
+
+posterior_samples(mod_fec) %>% select(contains("b_trt")) %>%
+  mutate(.iteration=1:dim(.)[1]) %>% 
+  pivot_longer(cols=-.iteration) %>%  
+  compare_levels(value,by=name) %>% 
+  ggplot()+stat_eye(aes(y=name,x=value))+geom_vline(xintercept = 0)
+
+
+posterior_samples(mod_fec) %>% select(contains("b_zi")) %>%
+  mutate(.iteration=1:dim(.)[1]) %>% 
+  pivot_longer(cols=-.iteration) %>%  
+  compare_levels(value,by=name) %>% 
+  ggplot()+stat_eye(aes(y=name,x=value))+geom_vline(xintercept = 0)
+
 ```
-
-
 
 # Dispersal 1
 ```{r}
@@ -331,24 +379,14 @@ data_disp<-raw_disp %>%
 ```{r}
 mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
          data=data_disp,family=binomial,
-         chains=4,iter=200,
+         chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
-                 set_prior("normal(0,1)",class="sd"))
+                 set_prior("normal(0,1)",class="sd")),
+         seed=42,control=list(adapt_delta=0.99)
 )
+
+posterior_samples(mod_disp) %>% select(contains("b_trt")) %>% mutate(.iteration=1:dim(.)[1])%>% pivot_longer(-.iteration) %>% compare_levels(variable=value,by=name) %>% ggplot() + stat_eye(aes(x=value,y=name))
 ```
-
-
-loo/kfold to compare to version with no Neggs_scaled? seems to work (both here and density) but need to recheck because pareto bad obs
-
-```{r}
-mod_disp_fec=brm(bf(Neggs_all~0+trt+(1|Mix/IDgroup/IDpop)),
-         data=data_disp,family=negbinomial,
-         chains=4,iter=200,
-         prior=c(set_prior("normal(0,1.5)",class="b"),
-                 set_prior("normal(0,1)",class="sd"))
-)
-```
-
 
 # Fecundity 2
 ```{r}
@@ -364,23 +402,108 @@ data_fec_dens<-raw_fec_dens %>%
                 mutate(trt=paste(Treatment,Location)) %>% 
                 mutate(trt=relevel(factor(trt),"stock stock")) %>%
                 mutate(trt=fct_recode(trt,stock="stock stock"))%>% 
-                mutate(Density_centred=-0.5+1*(Density=="high"))
+                mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
+
+data_fec_dens$obsID=1:dim(data_fec_dens)[1]
 ```
 
 
 ```{r}
-mod_fec_dens=brm(bf(Fecundity~0+trt+trt:Density_centred+(1|Mix/IDgroup/IDpop),
-            zi~0+trt+trt:Density_centred+(1|Mix/IDgroup/IDpop),
-            nlf(shape~1/invshape),invshape~1),
-         data=data_fec_dens,family=zero_inflated_negbinomial(link_shape = "identity"),
-         chains=2,iter=200,
+mod_fec_dens=brm(bf(Fecundity|trials(90)~0+trt+trt:Density+(1|Mix/IDgroup/IDpop)+(1|obsID),
+            zi~0+trt+trt:Density+(1|Mix/IDgroup/IDpop)),
+         data=data_fec_dens,family=zero_inflated_binomial,
+         chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
+                 set_prior("normal(0,1)",class="b",
+                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
+                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
+                                  "trtstock:Densityhigh")),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
-                 set_prior("normal(0,1)",class="sd",dpar="zi"),
-                 set_prior("normal(0,1)",nlpar="invshape",lb=0))
+                 set_prior("normal(0,1)",class="b",dpar="zi",
+                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
+                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
+                                  "trtstock:Densityhigh")),
+                 set_prior("normal(0,1)",class="sd",dpar="zi")),
+         seed=42, control=list(adapt_delta=0.99,max_treedepth=15)
 )
+
 ```
+
+
+```{r summary-model}
+###prediction intervals around each point
+ppc_ribbon(yrep=(predict(mod_fec_dens,summary=FALSE)),
+           x=rank(predict(mod_fec_dens)[,1]),
+           y=data_fec_dens$Fecundity,
+           prob = 0.5, prob_outer=0.95)
+```
+
+
+```{r}
+test0=data_fec %>% 
+  select(trt,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Density="low") %>% 
+  mutate(Experiment="F1 (no density variation)") %>% 
+  unique() %>% 
+  add_fitted_draws(mod_fec,re_formula = NA) %>% 
+  ungroup() %>% 
+  select(-c(trt,.row)) %>% 
+  pivot_wider(names_from=Density,values_from=.value) %>% 
+  mutate(high=NA)
+
+test=data_fec_dens %>% 
+  select(trt,Location,Treatment,Density) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Experiment="F2 (with density variation)") %>% 
+  unique() %>% 
+  add_fitted_draws(mod_fec_dens,re_formula = NA) %>% 
+  ungroup() %>% 
+  select(-c(trt,.row)) %>% 
+  pivot_wider(names_from=Density,values_from=.value) 
+
+p1<-  ggplot(rbind(test0,test)) +
+  stat_eye(aes(x=Location,y=low,fill=Experiment),
+           position="dodge")+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Mean fecundity at low density")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p2<-ggplot(test) +
+  stat_eye(aes(x=Location,y=high/low))+
+  geom_hline(yintercept=1,lty=2)+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Ratio of mean high/low density fecundity")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p1/p2
+  
+```
+
+
+```{r}
+data_fec %>% 
+    select(trt,Location,Treatment) %>% 
+    mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+    mutate(Density="low") %>% 
+    mutate(Experiment="F1 (no density variation)") %>% 
+    unique() %>% 
+    add_fitted_draws(mod_fec,re_formula = NA) %>%  ungroup() %>% compare_levels(.value,by=trt) %>% ggplot()+stat_eye(aes(y=trt,x=.value))
+
+
+data_fec_dens %>% 
+  select(trt,Location,Treatment,Density) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Experiment="F2 (with density variation)") %>% 
+  unique() %>% 
+  add_fitted_draws(mod_fec_dens,re_formula = NA) %>% 
+  ungroup() %>% filter(Density=="low") %>% compare_levels(.value,by=trt) %>% ggplot()+stat_eye(aes(y=trt,x=.value))
+```
+
+
 # Dispersal 2
 
 ```{r}
@@ -398,20 +521,24 @@ data_disp_dens<-raw_disp_dens %>%
                 mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
                 mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
                 mutate(Neggs_all_scaled=scale(Neggs_all)) %>% 
-                mutate(Neggs_all_log=log(Neggs_all)) %>% 
-                mutate(Density_centred=-0.5+1*(Density=="high"))
+                mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
 ```
 
 
 ```{r}
-mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+trt:Density_centred+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+trt:Density+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
          data=data_disp_dens,family=binomial,
-         chains=4,iter=200,
+         chains=4,iter=2000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
-                 set_prior("normal(0,1)",class="sd"))
+                 set_prior("normal(0,1)",class="b",
+                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
+                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
+                                  "trtstock:Densityhigh",
+                                  "Neggs_all_scaled")),
+                 set_prior("normal(0,1)",class="sd")),
+         seed=42,control=list(adapt_delta=0.99)
 )
 ```
-
 
 ```{r summary-model}
 ###prediction intervals around each point
@@ -423,10 +550,47 @@ ppc_ribbon(yrep=(predict(mod_disp_dens,summary=FALSE)),
 
 
 ```{r}
-mod_disp_dens_fec=brm(bf(Neggs_all~0+trt*Density_centred+(1|Mix/IDgroup/IDpop)),
-         data=data_disp_dens,family=negbinomial,
-         chains=4,iter=200,
-         prior=c(set_prior("normal(0,1.5)",class="b"),
-                 set_prior("normal(0,1)",class="sd"))
-)
+test0=data_disp %>% 
+  select(trt,Location,Treatment) %>% 
+  mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Density="low") %>% 
+  mutate(Experiment="F1 (no density variation)") %>% 
+  unique() %>% 
+  add_fitted_draws(mod_disp,re_formula = NA) %>% 
+  ungroup() %>% 
+  select(-c(trt,.row)) %>% 
+  pivot_wider(names_from=Density,values_from=.value) %>% 
+  mutate(high=NA)
+
+test=data_disp_dens %>% 
+  select(trt,Location,Treatment,Density) %>% 
+  mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Experiment="F2 (with density variation)") %>% 
+  unique() %>% 
+  add_fitted_draws(mod_disp_dens,re_formula = NA) %>% 
+  ungroup() %>% 
+  select(-c(trt,.row)) %>% 
+  pivot_wider(names_from=Density,values_from=.value) 
+
+p1<-  ggplot(rbind(test0,test)) +
+  stat_eye(aes(x=Location,y=low,fill=Experiment),
+           position="dodge")+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Mean dispersal rate at low density")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p2<-ggplot(test) +
+  stat_eye(aes(x=Location,y=high/low))+
+  geom_hline(yintercept=1,lty=2)+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Ratio of mean high/low density dispersal rates")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+p1/p2
+  
 ```
+
