@@ -4,3 +4,4 @@
 .Ruserdata
 data/expansion_data/Trichogramma_genetics.csv
 Rplot.pdf
+*.Rdata

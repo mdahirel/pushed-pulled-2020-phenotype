@@ -55,102 +55,7 @@ raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
 raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
 ```
 
-#Population density (reprisal)
 
-```{r}
-data_popsize<- raw_dynamics %>% 
-  mutate(Mix= as.numeric(str_sub(Image,1,1)),
-         Treatment = str_sub(Image,2,3),
-         Replicate = as.numeric(str_sub(Image,4,4)),
-         Patch = as.numeric(str_sub(Image,6,7))
-  ) %>% 
-  #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
-#or digit-digit (patches 10 and beyond)
-## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
-  mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
-  mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
-         obsID=paste(landscapeID,"_Generation",Generation,"_Patch",Patch,sep=""), # a unique ID for each replicate x patch x generation combination
-         Mix = factor(Mix)) %>% 
-  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`restricted connectedness`="PS")) %>% 
-  group_by(landscapeID,Generation) %>% 
-  mutate(front=max(Patch)) %>% 
-  ungroup() %>% 
-  group_by(landscapeID,Patch) %>% 
-  arrange(Generation) %>% 
-  mutate(front_prev=ifelse(Generation==1,0,lag(front))) %>% 
-  mutate(recol=Generation>(lag(Generation)+1)) %>% ##if there's a gap, it means extinction followed by recolonisation later
-  mutate(recol=replace_na(recol,FALSE)) %>% 
-  filter(Patch>0) %>%  ## we don't use the release patch
-  filter(cumsum(recol)==0) %>%    ## we only keep initial colonisations, so remove everything after initial extinction in a patch
-  mutate(founding_generation=min(Generation)) %>% 
-  mutate(time_since_founding=Generation-founding_generation) %>% 
-  
-  #mutate(is.passed.over=sum(time_since_founding==0 & Patch<front_prev,na.rm=TRUE)) %>% 
-  #an indicator to say if the patch was first founded from behind the previous front, instead of by the front advance
-  #filter(is.passed.over==0) %>% 
-  ungroup() %>%
-  dplyr::select(Macro,landscapeID,Patch,Generation,Treatment,obsID,Peggs_est,Mix,time_since_founding,founding_generation)
-
-##to do : count local extinction and count "passed over"; maybe actually include them if too big ????
-
-```
-
-
-
-```{r}
-
-mod_popsize <- brm(bf(Peggs_est~unobservedtrue+obsprocess,
-                      nlf(unobservedtrue~trend+residuals),
-                      #nlf(trend~logit(K-(K-F)*exp(-r*time_since_founding))), #monomolecular version
-                      nlf(trend~logit(F*K/(F+(K-F)*exp(-r*time_since_founding)))), #3par logistic version
-                      #nlf(trend~logit(K*(F/K)^(exp(-r*time_since_founding)))), #gompertz version (all from paine et al 2012 MEE)
-                      nlf(K~inv_logit(logitK)),
-                      nlf(F~inv_logit(logitF)),
-                      nlf(r~exp(logr)),
-                      logitK~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
-                      logitF~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
-                      logr~0+Treatment+Treatment:scale(founding_generation)+(1|Mix)+(1|1|landscapeID)+(1|2|landscapeID:Patch),
-                      nlf(phi~1/invphi),
-                      invphi~1,
-                      residuals~0+(1|gr(obsID,by=Treatment)),
-                      obsprocess~0+(1|Macro),
-                      nl=TRUE),
-                   data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
-                   iter=100,warmup=50,chains=2,
-                   prior=c(
-                       set_prior("normal(0,1.5)",class="b",nlpar=c("logitK","logitF")),
-                       set_prior("normal(0,1)",class="b",nlpar=c("logr")), ##move to default 0,1? less narrow on charact time scale?
-                       set_prior("normal(0,1)",class="sd",nlpar=c("logitK","logitF","logr","residuals","obsprocess")),
-                       set_prior("normal(0,1)",class="b",nlpar="invphi",lb=0),
-                       set_prior("lkj(2)",class="cor")
-                   ),
-                   control=list(adapt_delta=0.9),seed=42)
-
-##distance to the nearest patch and/or size of the nearest patch to M0??
-## keep the last gen in the dataset (borrowing info good enough for trend?)
-```
-idea: use posterior K and resid variance to estimate alpha at equilibrium???
-but may be a lot of work to get all the pieces for the beta dist??
-but important to express variance in abs scale
-but we're saved because connectedness increase K but decrease var, so would decrease var/K even more anyway, no need to calculate
-
-```{r}
-ppc_ribbon(yrep=predict(mod_popsize,summary=FALSE),
-           x=rank(predict(mod_popsize)[,1]),
-           y=data_popsize$Peggs_est,
-           prob = 0.5, prob_outer=0.95)
-```
-
-
-we need to keep the obs~treatment random effect as it reflects temporal stochasticity
-refe: high stochasticity, low densities occasionally found even in core
-restr: higher mean and low stochast, low densities rarely encountered in core
-
-spatiotemp variab select for dispersal, spatio only against
-helps interpret phenotype evolution, especially dispersal evolution in dens exp
-
-restric core: reduced disp at densities effectively encountered in core
-to check but at low densities, no change : lead to negDDD in core
 # Body size
 
 ```{r}
@@ -160,44 +65,34 @@ data_size<-raw_size %>%
                                       paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>% 
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
                 mutate(IDindiv=paste(IDpop,ID_in_batch,sep="_")) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
-                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
-                mutate(is.obsA=-0.5+1*(observer=="tibia_obsA"))
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock")) %>% 
+                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia")
 
-```
-
-```{r}
-### size accuracy
-#
-#mod=raw_size %>%
-#                mutate(IDgroup=ifelse(Generation==0,
-#                                      paste("Mix",Mix,"_stock",sep=""),
-#                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-#                                      )
-#                       )%>% 
-#                mutate(IDpop=ifelse(Generation==0,
-#                                    IDgroup,
-#                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-#                mutate(IDindiv=paste(IDpop,ID_in_batch,sep="_")) %>% 
-#                mutate(trt=paste(Treatment,Location)) %>% 
-#                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-#                mutate(trt=fct_recode(trt,stock="stock stock")) %>%
-#  brm(mvbf(bf(tibia_obsC~1),bf(tibia_obsA~1),rescor=TRUE),
-#      data=.
-#)
 ```
 
 
 use of nested hieracrhic groups to reflect phylogenetic relationships among pop taken from 
 
 ```{r}
-mod_size=brm(bf(scale(tibia)~0+trt+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=trt))),
+if (file.exists(here("R_output", "model_size.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_size.Rdata"))
+  } else {
+
+
+mod_size=brm(bf(scale(tibia)~0+context+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=context))),
         data=data_size,
         chains=4,iter=4000,
         prior=c(set_prior("normal(0,1)",class="b"),
@@ -206,37 +101,47 @@ mod_size=brm(bf(scale(tibia)~0+trt+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=trt)))
         seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
 )
 
+  save(list = "mod_size", file = here("R_output", "model_size.Rdata"))
+}
+```
+
+
+```{r}
 postSD <- posterior_samples(mod_size) %>% select(contains("sd_IDindiv_")) %>%  `*` (sd(data_size$tibia,na.rm=TRUE))%>% 
   as_tibble() %>% 
   mutate(.draw=1:dim(.)[1]) %>% pivot_longer(cols=-.draw) %>%  
   mutate(Location=case_when(str_detect(name,"stock")~"stock",
                             str_detect(name,"core")~"core",
-                            str_detect(name,"front")~"front"),
+                            str_detect(name,"edge")~"edge"),
          Treatment=case_when(str_detect(name,"stock")~"stock",
-                            str_detect(name,"control")~"control",
-                            str_detect(name,"restricted")~"restricted connectedness")
+                            str_detect(name,"reference")~"reference",
+                            str_detect(name,"reduced")~"reduced connectedness")
   ) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   select(.draw,sd=value,Treatment,Location)
 
 postmeans <- data_size %>% 
-  select(trt,Location,Treatment) %>% 
+  select(context,Location,Treatment) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   unique() %>% 
   add_fitted_draws(mod_size,re_formula = NA) %>% 
   ungroup() %>% 
   mutate(mean=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
-  select(.draw,mean,Treatment,Location)
+  select(.draw,mean,Treatment,Location,context)
 
-p1<-ggplot(postmeans) +
+post_size<-postmeans %>% left_join(postSD) %>% ungroup() %>% mutate(cv=sd/mean)
+
+p1<-ggplot(post_size) +
   stat_eye(aes(x=Location,y=mean))+
+  geom_jitter(data=data_size %>% 
+                group_by(Location,Treatment,IDindiv) %>% 
+                summarise(tibia=mean(tibia)),aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Mean body size (tibia length)")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
-p2<-postmeans %>% left_join(postSD) %>% ungroup() %>% mutate(cv=sd/mean) %>%
-  ggplot()+
+p2<-ggplot(post_size)+
   stat_eye(aes(x=Location,y=cv))+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Within-population CV")+
@@ -244,6 +149,26 @@ p2<-postmeans %>% left_join(postSD) %>% ungroup() %>% mutate(cv=sd/mean) %>%
   theme_bw()
 
 p1/p2
+
+post_size %>% compare_levels(variable=cv, by=context) %>% mean_hdi()
+post_size %>% compare_levels(variable=mean, by=context) %>% mean_hdi()
+
+p3<-post_size %>% 
+  group_by(.draw) %>% 
+  mutate(stockmean=mean(subset(mean,Treatment=="stock"))) %>% 
+  mutate(stocksd=mean(subset(sd,Treatment=="stock"))) %>% 
+  ungroup() %>% 
+  mutate(pnorm=pnorm(stockmean-stocksd,mean,sd)) %>% 
+  ggplot()+
+  stat_eye(aes(x=Location,y=pnorm),normalize="xy")+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Proportion of \"small\" wasps")+
+    facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  geom_hline(yintercept = pnorm(-1,0,1),lty=2)+
+  theme_bw()
+
+p1/p2/p3 + plot_annotation(tag_levels="A")
+
 ```
 
 shifts mostly in variance. Looks negatively correlated with population density on aevrage in each category (though no way to be sure without stock densities)
@@ -255,22 +180,26 @@ read on effect of competition on size both plastic and selective
 ```{r}
 data_mvt<-raw_mvt %>% 
                 filter(Generation %in% c(0,10)) %>% 
-                filter(timestamp<=300) %>% ##some replicate are filmed longer than the nominal 5 minutes, this removes their ends to standardize
+                filter(timestamp<=300) %>% ##some replicate are filmed slightly longer than the nominal 5 minutes, this removes their ends to standardize
                 mutate(Nobs=substr(File,nchar(File)-1,nchar(File))) %>% #note: rerecord correctly #wrong for G4 for which not given and last code is testing unit
                 mutate(Nobs=as.numeric(str_remove(Nobs,"_"))) %>%  ##but we don't do G4 anyway, soooo
                 mutate(IDgroup=ifelse(Generation==0,
                                       paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
+                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_Generation10",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>% 
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
                 mutate(IDtest=paste(IDpop,testing_unit,sep="_")) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
-                group_by(Mix,Treatment,Generation,Replicate,Location,IDgroup,IDpop,IDtest,trt) %>% 
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock")) %>% 
+                group_by(Mix,Treatment,Generation,Replicate,Location,IDgroup,IDpop,IDtest,context) %>% 
                 summarise(percentData=mean(percentData), ##this column is already a testing_unit- level variable
                           activity_time=sum(path_duration*activity_percent),
                           obs_time=sum(path_duration),
@@ -282,7 +211,13 @@ data_mvt<-raw_mvt %>%
 
 
 ```{r}
-mod_mvt=brm(bf(activity_percent~0+trt+(1|Mix/IDgroup/IDpop),
+if (file.exists(here("R_output", "model_mvt.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_mvt.Rdata"))
+  } else {
+mod_mvt=brm(bf(activity_percent~0+context+(1|Mix/IDgroup/IDpop),
                nlf(phi~1/invphi),
                invphi~1),
         data=data_mvt,family=Beta,
@@ -292,9 +227,29 @@ mod_mvt=brm(bf(activity_percent~0+trt+(1|Mix/IDgroup/IDpop),
                 set_prior("normal(0,1)",nlpar="invphi",lb=0)),
         seed=42,control=list(adapt_delta=0.99)
 )
+  save(list = "mod_mvt", file = here("R_output", "model_mvt.Rdata"))
+}
+```
+
+
+```{r}
+data_mvt %>% 
+  select(context,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  unique() %>% 
+  add_fitted_draws(mod_mvt,re_formula = NA) %>% 
+  ungroup() %>% 
+ggplot() +
+  stat_eye(aes(x=Location,y=.value))+
+  geom_jitter(data=data_mvt,aes(x=Location,y=activity_percent),col="grey50",alpha=0.4)+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Mean body size (tibia length)")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
 
 ##no differences among treatments
-posterior_samples(mod_mvt) %>% select(contains("b_trt")) %>%
+posterior_samples(mod_mvt) %>% select(contains("b_context")) %>%
   mutate(.iteration=1:dim(.)[1]) %>% 
   pivot_longer(cols=-.iteration) %>%  
   compare_levels(value,by=name) %>% 
@@ -302,7 +257,7 @@ posterior_samples(mod_mvt) %>% select(contains("b_trt")) %>%
 
 
 #posterior grand mean
-posterior_samples(mod_mvt) %>% select(contains("b_trt")) %>% mutate(grandmean=rowMeans(.)) %>% 
+posterior_samples(mod_mvt) %>% select(contains("b_context")) %>% mutate(grandmean=rowMeans(.)) %>% 
   mean_hdi(invlogit(grandmean))
 
 ```
@@ -318,30 +273,45 @@ data_fec<-raw_fec %>%
                                       paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>%
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock"))
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock"))
 
 data_fec$obsID=1:dim(data_fec)[1]
 ```
 
 
 ```{r}
-mod_fec=brm(bf(Fecundity|trials(90)~0+trt+(1|Mix/IDgroup/IDpop)+(1|obsID),
-            zi~0+trt+(1|Mix/IDgroup/IDpop)),
-         data=data_fec,family=zero_inflated_binomial(), #or hurdle?? think about it
-         chains=4,iter=100,
+if (file.exists(here("R_output", "model_fecundity1.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_fecundity1.Rdata"))
+  } else {
+mod_fec=brm(bf(Fecundity|trials(90)~0+context+(1|Mix/IDgroup/IDpop)+(1|obsID),
+            zi~0+context+(1|Mix/IDgroup/IDpop)),
+         data=data_fec,family=zero_inflated_binomial(),
+         chains=4,iter=5000,  #to REDO with MORE to eliminate divergences!!!
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
                  set_prior("normal(0,1)",class="sd",dpar="zi")),
          seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
 )
+  save(list = "mod_fec", file = here("R_output", "model_fecundity1.Rdata"))
+}
+```
 
-posterior_samples(mod_fec) %>% select(contains("b_trt")) %>%
+
+```{r}
+posterior_samples(mod_fec) %>% select(contains("b_context")) %>%
   mutate(.iteration=1:dim(.)[1]) %>% 
   pivot_longer(cols=-.iteration) %>%  
   compare_levels(value,by=name) %>% 
@@ -365,27 +335,42 @@ data_disp<-raw_disp %>%
                                       paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>%
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock")) %>% 
                 mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
                 mutate(Neggs_all_scaled=scale(Neggs_all))
 ```
 
 
 ```{r}
-mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+if (file.exists(here("R_output", "model_dispersal1.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_dispersal1.Rdata"))
+  } else {
+mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~0+context+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
          data=data_disp,family=binomial,
          chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="sd")),
          seed=42,control=list(adapt_delta=0.99)
 )
+  save(list = "mod_disp", file = here("R_output", "model_dispersal1.Rdata"))
+}
+```
 
-posterior_samples(mod_disp) %>% select(contains("b_trt")) %>% mutate(.iteration=1:dim(.)[1])%>% pivot_longer(-.iteration) %>% compare_levels(variable=value,by=name) %>% ggplot() + stat_eye(aes(x=value,y=name))
+
+```{r}
+posterior_samples(mod_disp) %>% select(contains("b_context")) %>% mutate(.iteration=1:dim(.)[1])%>% pivot_longer(-.iteration) %>% compare_levels(variable=value,by=name) %>% ggplot() + stat_eye(aes(x=value,y=name))
 ```
 
 # Fecundity 2
@@ -396,12 +381,16 @@ data_fec_dens<-raw_fec_dens %>%
                                       paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>%
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock"))%>% 
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock"))%>% 
                 mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
 
 data_fec_dens$obsID=1:dim(data_fec_dens)[1]
@@ -409,25 +398,32 @@ data_fec_dens$obsID=1:dim(data_fec_dens)[1]
 
 
 ```{r}
-mod_fec_dens=brm(bf(Fecundity|trials(90)~0+trt+trt:Density+(1|Mix/IDgroup/IDpop)+(1|obsID),
-            zi~0+trt+trt:Density+(1|Mix/IDgroup/IDpop)),
+if (file.exists(here("R_output", "model_fecundity2.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_fecundity2.Rdata"))
+  } else {
+mod_fec_dens=brm(bf(Fecundity|trials(90)~0+context+context:Density+(1|Mix/IDgroup/IDpop)+(1|obsID),
+            zi~0+context+context:Density+(1|Mix/IDgroup/IDpop)),
          data=data_fec_dens,family=zero_inflated_binomial,
          chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="b",
-                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
-                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
-                                  "trtstock:Densityhigh")),
+                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
+                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
+                                  "contextstock:Densityhigh")),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
                  set_prior("normal(0,1)",class="b",dpar="zi",
-                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
-                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
-                                  "trtstock:Densityhigh")),
+                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
+                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
+                                  "contextstock:Densityhigh")),
                  set_prior("normal(0,1)",class="sd",dpar="zi")),
          seed=42, control=list(adapt_delta=0.99,max_treedepth=15)
 )
-
+  save(list = "mod_fec_dens", file = here("R_output", "model_fecundity2.Rdata"))
+}
 ```
 
 
@@ -442,83 +438,90 @@ ppc_ribbon(yrep=(predict(mod_fec_dens,summary=FALSE)),
 
 ```{r}
 test0=data_fec %>% 
-  select(trt,Location,Treatment) %>% 
+  select(context,Location,Treatment) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   mutate(Density="low") %>% 
   mutate(Experiment="F1 (no density variation)") %>% 
   unique() %>% 
   add_fitted_draws(mod_fec,re_formula = NA) %>% 
   ungroup() %>% 
-  select(-c(trt,.row)) %>% 
+  select(-c(context,.row)) %>% 
   pivot_wider(names_from=Density,values_from=.value) %>% 
   mutate(high=NA)
 
 test=data_fec_dens %>% 
-  select(trt,Location,Treatment,Density) %>% 
+  select(context,Location,Treatment,Density) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   mutate(Experiment="F2 (with density variation)") %>% 
   unique() %>% 
   add_fitted_draws(mod_fec_dens,re_formula = NA) %>% 
   ungroup() %>% 
-  select(-c(trt,.row)) %>% 
+  select(-c(context,.row)) %>% 
   pivot_wider(names_from=Density,values_from=.value) 
 
 p1<-  ggplot(rbind(test0,test)) +
-  stat_eye(aes(x=Location,y=low,fill=Experiment),
+  stat_eye(aes(x=Location,y=low,fill=Experiment,alpha=0.3),
            position="dodge")+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Mean fecundity at low density")+
+  scale_fill_manual(values=c("#d95f02","#7570b3")) + 
+  guides(alpha=FALSE) +
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
 p2<-ggplot(test) +
-  stat_eye(aes(x=Location,y=high/low))+
+  stat_eye(aes(x=Location,y=high/low),fill="#7570b3",alpha=0.7)+
   geom_hline(yintercept=1,lty=2)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Ratio of mean high/low density fecundity")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
-p1/p2
+p1/p2 + plot_annotation(tag_levels="A")
   
 ```
 
 
 ```{r}
 data_fec %>% 
-    select(trt,Location,Treatment) %>% 
+    select(context,Location,Treatment) %>% 
     mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
     mutate(Density="low") %>% 
     mutate(Experiment="F1 (no density variation)") %>% 
     unique() %>% 
-    add_fitted_draws(mod_fec,re_formula = NA) %>%  ungroup() %>% compare_levels(.value,by=trt) %>% ggplot()+stat_eye(aes(y=trt,x=.value))
+    add_fitted_draws(mod_fec,re_formula = NA) %>%  ungroup() %>% compare_levels(.value,by=context) %>% ggplot()+stat_eye(aes(y=context,x=.value))
 
 
 data_fec_dens %>% 
-  select(trt,Location,Treatment,Density) %>% 
+  select(context,Location,Treatment,Density) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   mutate(Experiment="F2 (with density variation)") %>% 
   unique() %>% 
   add_fitted_draws(mod_fec_dens,re_formula = NA) %>% 
-  ungroup() %>% filter(Density=="low") %>% compare_levels(.value,by=trt) %>% ggplot()+stat_eye(aes(y=trt,x=.value))
+  ungroup() %>% filter(Density=="low") %>% compare_levels(.value,by=context) %>% ggplot()+stat_eye(aes(y=context,x=.value))
 ```
 
 
 # Dispersal 2
 
 ```{r}
+
 data_disp_dens<-raw_disp_dens %>% 
                 mutate(IDgroup=ifelse(Generation==0,
                                       paste("Mix",Mix,"_stock",sep=""),
                                       paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
                                       )
                        )%>% 
+                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
+                mutate(Treatment=fct_recode(factor(Treatment),
+                                            reference="control",
+                                            `reduced connectedness`="restricted connectedness")) %>%
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(trt=paste(Treatment,Location)) %>% 
-                mutate(trt=relevel(factor(trt),"stock stock")) %>%
-                mutate(trt=fct_recode(trt,stock="stock stock")) %>% 
+                mutate(context=paste(Treatment,Location)) %>% 
+                mutate(context=relevel(factor(context),"stock stock")) %>%
+                mutate(context=fct_recode(context,stock="stock stock")) %>% 
                 mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
                 mutate(Neggs_all_scaled=scale(Neggs_all)) %>% 
                 mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
@@ -526,18 +529,27 @@ data_disp_dens<-raw_disp_dens %>%
 
 
 ```{r}
-mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+trt+trt:Density+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+if (file.exists(here("R_output", "model_dispersal2.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_dispersal2.Rdata"))
+  } else {
+mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+context+context:Density+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
          data=data_disp_dens,family=binomial,
          chains=4,iter=2000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="b",
-                           coef=c("trtcontrolcore:Densityhigh","trtcontrolfront:Densityhigh",
-                                  "trtrestrictedconnectednesscore:Densityhigh","trtrestrictedconnectednessfront:Densityhigh",
-                                  "trtstock:Densityhigh",
+                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
+                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
+                                  "contextstock:Densityhigh",
                                   "Neggs_all_scaled")),
                  set_prior("normal(0,1)",class="sd")),
          seed=42,control=list(adapt_delta=0.99)
 )
+
+  save(list = "mod_disp_dens", file = here("R_output", "model_dispersal2.Rdata"))
+}
 ```
 
 ```{r summary-model}
@@ -551,7 +563,7 @@ ppc_ribbon(yrep=(predict(mod_disp_dens,summary=FALSE)),
 
 ```{r}
 test0=data_disp %>% 
-  select(trt,Location,Treatment) %>% 
+  select(context,Location,Treatment) %>% 
   mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   mutate(Density="low") %>% 
@@ -559,38 +571,134 @@ test0=data_disp %>%
   unique() %>% 
   add_fitted_draws(mod_disp,re_formula = NA) %>% 
   ungroup() %>% 
-  select(-c(trt,.row)) %>% 
+  select(-c(context,.row)) %>% 
   pivot_wider(names_from=Density,values_from=.value) %>% 
   mutate(high=NA)
 
 test=data_disp_dens %>% 
-  select(trt,Location,Treatment,Density) %>% 
+  select(context,Location,Treatment,Density) %>% 
   mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   mutate(Experiment="F2 (with density variation)") %>% 
   unique() %>% 
   add_fitted_draws(mod_disp_dens,re_formula = NA) %>% 
   ungroup() %>% 
-  select(-c(trt,.row)) %>% 
+  select(-c(context,.row)) %>% 
   pivot_wider(names_from=Density,values_from=.value) 
 
 p1<-  ggplot(rbind(test0,test)) +
-  stat_eye(aes(x=Location,y=low,fill=Experiment),
+  stat_eye(aes(x=Location,y=low,fill=Experiment,alpha=0.3),
            position="dodge")+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Mean dispersal rate at low density")+
+  scale_fill_manual(values=c("#d95f02","#7570b3")) + 
+  guides(alpha=FALSE) +
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
 p2<-ggplot(test) +
-  stat_eye(aes(x=Location,y=high/low))+
+  stat_eye(aes(x=Location,y=high/low),fill="#7570b3",alpha=0.7)+
   geom_hline(yintercept=1,lty=2)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Ratio of mean high/low density dispersal rates")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
-p1/p2
-  
+p1/p2 + plot_annotation(tag_levels="A")
+
+
+test %>% group_by(Treatment,Location) %>% mean_hdi(high/low)
+```
+
+
+
+
+```{r}
+data_disp %>% 
+    select(context,Location,Treatment) %>% 
+    mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+    mutate(Density="low") %>% 
+    mutate(Experiment="F1 (no density variation)") %>% 
+    mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
+    unique() %>% 
+    add_fitted_draws(mod_disp,re_formula = NA) %>%  ungroup() %>% compare_levels(.value,by=context) %>% ggplot()+stat_eye(aes(y=context,x=.value))
+
+
+data_disp_dens %>% 
+  select(context,Location,Treatment,Density) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  mutate(Experiment="F2 (with density variation)") %>% 
+  mutate(Neggs_all=1,Neggs_all_scaled=0) %>% 
+  unique() %>% 
+  add_fitted_draws(mod_disp_dens,re_formula = NA) %>% 
+  ungroup() %>% filter(Density=="low") %>% compare_levels(.value,by=context) %>% ggplot()+stat_eye(aes(y=context,x=.value))
+```
+
+
+
+
+
+
+
+
+
+```{r}
+data_popsize<- raw_dynamics %>% 
+  mutate(Mix= as.numeric(str_sub(Image,1,1)),
+         Treatment = str_sub(Image,2,3),
+         Replicate = as.numeric(str_sub(Image,4,4)),
+         Patch = as.numeric(str_sub(Image,6,7))
+  ) %>% 
+  #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
+#or digit-digit (patches 10 and beyond)
+## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
+  mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
+         obsID=paste(landscapeID,"_Generation",Generation,"_Patch",Patch,sep=""), # a unique ID for each replicate x patch x generation combination
+         Mix = factor(Mix)) %>% 
+  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`reduced connectedness`="PS")) %>% 
+  group_by(landscapeID,Generation) %>% 
+  ungroup() %>% 
+  filter(Patch==0) %>% 
+  select(Macro,landscapeID,Generation,Treatment,obsID,Peggs_est,Mix)
+##to do : count local extinction and count "passed over"; maybe actually include them if too big ????
+```
+
+
+
+```{r}
+if (file.exists(here("R_output", "model_popsize.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_popsize.Rdata"))
+  } else {
+mod_popsize <- brm(bf(Peggs_est~0+Treatment+(1|Macro)+(1|Mix)+(1|landscapeID)+(1|gr(obsID,by=Treatment)),
+                      nlf(phi~1/invphi),
+                      invphi~1),
+                   data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
+                   iter=4000,chains=4,
+                   prior=c(
+                       set_prior("normal(0,1.5)",class="b"),
+                       set_prior("normal(0,1)",class="sd"),
+                       set_prior("normal(0,1)",nlpar="invphi",lb=0)
+                   ),
+                   control=list(adapt_delta=0.95,max_treedepth=15),seed=42)
+  save(list = "mod_popsize", file = here("R_output", "model_popsize.Rdata"))
+}
+```
+
+```{r}
+posterior_samples(mod_popsize) %>% 
+  select(contains("sd_obsID")) %>% 
+  pivot_longer(everything()) %>% 
+  mutate(Treatment=case_when(str_detect(name,"reference")~"reference",
+                             str_detect(name,"reduced")~"reduced connectedness")) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"reference",after=0)) %>% 
+  ggplot()+
+  stat_eye(aes(x=Treatment,y=value^2)) + 
+  scale_y_continuous("Within-patch temporal variance in population size (latent scale)")+
+  scale_x_discrete("Landscape treatment")+
+  theme_bw()
 ```
 
