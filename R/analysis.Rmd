@@ -148,26 +148,10 @@ p2<-ggplot(post_size)+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
-p1/p2
+p1/p2 + plot_annotation(tag_levels="A")
 
 post_size %>% compare_levels(variable=cv, by=context) %>% mean_hdi()
 post_size %>% compare_levels(variable=mean, by=context) %>% mean_hdi()
-
-p3<-post_size %>% 
-  group_by(.draw) %>% 
-  mutate(stockmean=mean(subset(mean,Treatment=="stock"))) %>% 
-  mutate(stocksd=mean(subset(sd,Treatment=="stock"))) %>% 
-  ungroup() %>% 
-  mutate(pnorm=pnorm(stockmean-stocksd,mean,sd)) %>% 
-  ggplot()+
-  stat_eye(aes(x=Location,y=pnorm),normalize="xy")+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Proportion of \"small\" wasps")+
-    facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  geom_hline(yintercept = pnorm(-1,0,1),lty=2)+
-  theme_bw()
-
-p1/p2/p3 + plot_annotation(tag_levels="A")
 
 ```
 
@@ -243,7 +227,7 @@ ggplot() +
   stat_eye(aes(x=Location,y=.value))+
   geom_jitter(data=data_mvt,aes(x=Location,y=activity_percent),col="grey50",alpha=0.4)+
   scale_x_discrete("Experimental context")+
-  scale_y_continuous("Mean body size (tibia length)")+
+  scale_y_continuous("Proportion of time active")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
