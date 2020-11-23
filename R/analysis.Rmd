@@ -653,40 +653,28 @@ data_popsize<- raw_dynamics %>%
 ```
 
 
-
 ```{r}
-if (file.exists(here("R_output", "model_popsize.Rdata")))
-# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
-# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
-  {
-    load(here("R_output", "model_popsize.Rdata"))
-  } else {
-mod_popsize <- brm(bf(Peggs_est~0+Treatment+(1|Macro)+(1|Mix)+(1|landscapeID)+(1|gr(obsID,by=Treatment)),
-                      nlf(phi~1/invphi),
-                      invphi~1),
-                   data=data_popsize,family=Beta(link_phi="identity"), #careful with link_phi = identity, avoid if covariates, especially ranefs; but think how to setup otherwise
-                   iter=4000,chains=4,
-                   prior=c(
-                       set_prior("normal(0,1.5)",class="b"),
-                       set_prior("normal(0,1)",class="sd"),
-                       set_prior("normal(0,1)",nlpar="invphi",lb=0)
-                   ),
-                   control=list(adapt_delta=0.95,max_treedepth=15),seed=42)
-  save(list = "mod_popsize", file = here("R_output", "model_popsize.Rdata"))
-}
-```
 
-```{r}
-posterior_samples(mod_popsize) %>% 
-  select(contains("sd_obsID")) %>% 
-  pivot_longer(everything()) %>% 
-  mutate(Treatment=case_when(str_detect(name,"reference")~"reference",
-                             str_detect(name,"reduced")~"reduced connectedness")) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"reference",after=0)) %>% 
-  ggplot()+
-  stat_eye(aes(x=Treatment,y=value^2)) + 
-  scale_y_continuous("Within-patch temporal variance in population size (latent scale)")+
-  scale_x_discrete("Landscape treatment")+
-  theme_bw()
+data_cv<-data_popsize %>%
+  ungroup() %>%
+  group_by(Treatment,landscapeID,Macro) %>% 
+  summarise(meanP=mean(Peggs_est,na.rm=TRUE),sdP=sd(Peggs_est,na.rm=TRUE)) %>% 
+  mutate(CV_P=sdP/meanP)
+
+
+mod=brm(CV_P~0+Treatment+(1|Macro),
+        family=lognormal,
+        data=data_cv,
+        seed=42,
+        prior=c(
+          set_prior("normal(0,1)",class="b"),
+          set_prior("normal(0,1)",class="sd"),
+          set_prior("normal(0,1)",class="sigma")
+        ), 
+        control=list(adapt_delta=0.9, max_treedepth=20),
+        iter=6000, chains=4
+        )
+
+####will very obviously work , but need to solve divergenttransitions
 ```
 
