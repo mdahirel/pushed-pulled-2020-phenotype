@@ -19,16 +19,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(arm)
 library(tidyverse)
+#library(rstan)
+library(cmdstanr)
+library(brms)
+options(mc.cores = 2)
 
-library(rstan)
 library(bayesplot)
-library(brms)
-rstan_options(auto_write = TRUE)
-options(mc.cores = 2) #temporary unparallel to view progress in console rather than viewer to avoid viewer bug in new rstudio preview
-library(brms)
 
 library(tidybayes)
-
 
 library(patchwork)
 
@@ -58,6 +56,13 @@ raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
 
 # Body size
 
+ID group is the landscape ID (so Mix * Treatment * Replicate); = Mix "stock" if stock
+we recode Treatment and Location levels
+then IDpop is the population replicate, = ID group for stock, = IDgroup*Location (edge-core) for others
+then IDindividual for which individual is measured
+then creation of a context variable (basically treatment*location)
+then pivoting to long format, so one row = one obs instead of one individual
+
 ```{r}
 data_size<-raw_size %>%
                 mutate(IDgroup=ifelse(Generation==0,
@@ -68,7 +73,7 @@ data_size<-raw_size %>%
                 mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
                 mutate(Treatment=fct_recode(factor(Treatment),
                                             reference="control",
-                                            `reduced connectedness`="restricted connectedness")) %>% 
+                                            `reduced connectivity`="restricted connectedness")) %>% 
                 mutate(IDpop=ifelse(Generation==0,
                                     IDgroup,
                                     paste(IDgroup,"_Location",Location,sep=""))) %>% 
@@ -76,7 +81,8 @@ data_size<-raw_size %>%
                 mutate(context=paste(Treatment,Location)) %>% 
                 mutate(context=relevel(factor(context),"stock stock")) %>%
                 mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia")
+                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
+  filter(is.na(tibia)==FALSE)
 
 ```
 
@@ -92,13 +98,13 @@ if (file.exists(here("R_output", "model_size.Rdata")))
   } else {
 
 
-mod_size=brm(bf(scale(tibia)~0+context+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=context))),
+mod_size=brm(bf(scale(tibia)~0+context+(1|Mix/IDgroup/IDpop)+(1|IDindiv)),
         data=data_size,
         chains=4,iter=4000,
         prior=c(set_prior("normal(0,1)",class="b"),
                 set_prior("normal(0,1)",class="sigma"),
                 set_prior("normal(0,1)",class="sd")),
-        seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
+        seed=42,control=list(adapt_delta=0.99,max_treedepth=15), backend="cmdstanr"
 )
 
   save(list = "mod_size", file = here("R_output", "model_size.Rdata"))
@@ -107,20 +113,7 @@ mod_size=brm(bf(scale(tibia)~0+context+(1|Mix/IDgroup/IDpop)+(1|gr(IDindiv,by=co
 
 
 ```{r}
-postSD <- posterior_samples(mod_size) %>% select(contains("sd_IDindiv_")) %>%  `*` (sd(data_size$tibia,na.rm=TRUE))%>% 
-  as_tibble() %>% 
-  mutate(.draw=1:dim(.)[1]) %>% pivot_longer(cols=-.draw) %>%  
-  mutate(Location=case_when(str_detect(name,"stock")~"stock",
-                            str_detect(name,"core")~"core",
-                            str_detect(name,"edge")~"edge"),
-         Treatment=case_when(str_detect(name,"stock")~"stock",
-                            str_detect(name,"reference")~"reference",
-                            str_detect(name,"reduced")~"reduced connectedness")
-  ) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
-  select(.draw,sd=value,Treatment,Location)
-
-postmeans <- data_size %>% 
+post_size <- data_size %>% 
   select(context,Location,Treatment) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   unique() %>% 
@@ -129,28 +122,16 @@ postmeans <- data_size %>%
   mutate(mean=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
   select(.draw,mean,Treatment,Location,context)
 
-post_size<-postmeans %>% left_join(postSD) %>% ungroup() %>% mutate(cv=sd/mean)
-
-p1<-ggplot(post_size) +
-  stat_eye(aes(x=Location,y=mean))+
+ggplot(post_size) +
+  stat_eye(aes(x=Location,y=mean),.width=c(0.01,0.95))+
   geom_jitter(data=data_size %>% 
                 group_by(Location,Treatment,IDindiv) %>% 
                 summarise(tibia=mean(tibia)),aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
   scale_x_discrete("Experimental context")+
-  scale_y_continuous("Mean body size (tibia length)")+
+  scale_y_continuous("Mean tibia length (μm)")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   theme_bw()
 
-p2<-ggplot(post_size)+
-  stat_eye(aes(x=Location,y=cv))+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Within-population CV")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  theme_bw()
-
-p1/p2 + plot_annotation(tag_levels="A")
-
-post_size %>% compare_levels(variable=cv, by=context) %>% mean_hdi()
 post_size %>% compare_levels(variable=mean, by=context) %>% mean_hdi()
 
 ```
@@ -209,7 +190,7 @@ mod_mvt=brm(bf(activity_percent~0+context+(1|Mix/IDgroup/IDpop),
         prior=c(set_prior("normal(0,1.5)",class="b"),
                 set_prior("normal(0,1)",class="sd"),
                 set_prior("normal(0,1)",nlpar="invphi",lb=0)),
-        seed=42,control=list(adapt_delta=0.99)
+        seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
 )
   save(list = "mod_mvt", file = here("R_output", "model_mvt.Rdata"))
 }
@@ -287,7 +268,7 @@ mod_fec=brm(bf(Fecundity|trials(90)~0+context+(1|Mix/IDgroup/IDpop)+(1|obsID),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
                  set_prior("normal(0,1)",class="sd",dpar="zi")),
-         seed=42,control=list(adapt_delta=0.99,max_treedepth=15)
+         seed=42,control=list(adapt_delta=0.99,max_treedepth=15),backend="cmdstanr"
 )
   save(list = "mod_fec", file = here("R_output", "model_fecundity1.Rdata"))
 }
@@ -346,7 +327,7 @@ mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~0+context+Neggs_all_scaled+(1|Mi
          chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99)
+         seed=42,control=list(adapt_delta=0.99), backend="cmdstanr"
 )
   save(list = "mod_disp", file = here("R_output", "model_dispersal1.Rdata"))
 }
@@ -375,7 +356,8 @@ data_fec_dens<-raw_fec_dens %>%
                 mutate(context=paste(Treatment,Location)) %>% 
                 mutate(context=relevel(factor(context),"stock stock")) %>%
                 mutate(context=fct_recode(context,stock="stock stock"))%>% 
-                mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
+                mutate(Density=fct_relevel(factor(Density),"high",after=Inf)) %>% 
+                mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
 
 data_fec_dens$obsID=1:dim(data_fec_dens)[1]
 ```
@@ -388,21 +370,21 @@ if (file.exists(here("R_output", "model_fecundity2.Rdata")))
   {
     load(here("R_output", "model_fecundity2.Rdata"))
   } else {
-mod_fec_dens=brm(bf(Fecundity|trials(90)~0+context+context:Density+(1|Mix/IDgroup/IDpop)+(1|obsID),
-            zi~0+context+context:Density+(1|Mix/IDgroup/IDpop)),
+mod_fec_dens=brm(bf(Fecundity|trials(90)~0+context+context:Density_centred+(1|Mix/IDgroup/IDpop)+(1|obsID),
+            zi~0+context+context:Density_centred+(1|Mix/IDgroup/IDpop)),
          data=data_fec_dens,family=zero_inflated_binomial,
          chains=4,iter=4000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="b",
-                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
-                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
-                                  "contextstock:Densityhigh")),
+                           coef=c("contextreferencecore:Density_centred","contextreferenceedge:Density_centred",
+                                  "contextreducedconnectednesscore:Density_centred","contextreducedconnectednessedge:Density_centred",
+                                  "contextstock:Density_centred")),
                  set_prior("normal(0,1)",class="sd"),
                  set_prior("normal(0,1.5)",class="b",dpar="zi"),
                  set_prior("normal(0,1)",class="b",dpar="zi",
-                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
-                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
-                                  "contextstock:Densityhigh")),
+                           coef=c("contextreferencecore:Density_centred","contextreferenceedge:Density_centred",
+                                  "contextreducedconnectednesscore:Density_centred","contextreducedconnectednessedge:Density_centred",
+                                  "contextstock:Density_centred")),
                  set_prior("normal(0,1)",class="sd",dpar="zi")),
          seed=42, control=list(adapt_delta=0.99,max_treedepth=15)
 )
@@ -508,7 +490,8 @@ data_disp_dens<-raw_disp_dens %>%
                 mutate(context=fct_recode(context,stock="stock stock")) %>% 
                 mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
                 mutate(Neggs_all_scaled=scale(Neggs_all)) %>% 
-                mutate(Density=fct_relevel(factor(Density),"high",after=Inf))
+                mutate(Density=fct_relevel(factor(Density),"high",after=Inf)) %>% 
+                mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
 ```
 
 
@@ -519,17 +502,17 @@ if (file.exists(here("R_output", "model_dispersal2.Rdata")))
   {
     load(here("R_output", "model_dispersal2.Rdata"))
   } else {
-mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+context+context:Density+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
+mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~0+context+context:Density_centred+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
          data=data_disp_dens,family=binomial,
          chains=4,iter=2000,
          prior=c(set_prior("normal(0,1.5)",class="b"),
                  set_prior("normal(0,1)",class="b",
-                           coef=c("contextreferencecore:Densityhigh","contextreferenceedge:Densityhigh",
-                                  "contextreducedconnectednesscore:Densityhigh","contextreducedconnectednessedge:Densityhigh",
-                                  "contextstock:Densityhigh",
+                           coef=c("contextreferencecore:Density_centred","contextreferenceedge:Density_centred",
+                                  "contextreducedconnectednesscore:Density_centred","contextreducedconnectednessedge:Density_centred",
+                                  "contextstock:Density_centred",
                                   "Neggs_all_scaled")),
                  set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99)
+         seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
 )
 
   save(list = "mod_disp_dens", file = here("R_output", "model_dispersal2.Rdata"))
@@ -598,6 +581,67 @@ p1/p2 + plot_annotation(tag_levels="A")
 test %>% group_by(Treatment,Location) %>% mean_hdi(high/low)
 ```
 
+```{r}
+
+data_disp %>% 
+  group_by(Location, Treatment) %>% 
+  mutate(Neggs_all_scaled = mean(Neggs_all_scaled)) %>% 
+  ungroup() %>% 
+  add_fitted_draws(mod_disp,re_formula=NA) %>% 
+  group_by(Location, Treatment, .draw) %>% 
+  summarise(.value=mean(.value/Neggs_all)) %>% 
+  ungroup() %>% 
+  ggplot()+
+  stat_eye(aes(Location, .value))+
+  geom_jitter(data=data_disp,aes(Location,Neggs_arrival/Neggs_all))+
+  #stat_pointinterval(data=data_disp,aes(Location,Neggs_arrival/Neggs_all), col="red")+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Effective dispersal rate")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+
+data_disp_dens %>% 
+  #group_by(Location, Treatment, Density) %>% 
+  #mutate(Neggs_all_scaled = mean(Neggs_all_scaled)) %>% 
+  #ungroup() %>% 
+  add_fitted_draws(mod_disp_dens,re_formula=NA) %>% 
+  ## apparent discrepancy between mean of points and mean posterior due to random effect
+  ## add suppl mat with mean including random effects to show this?
+  group_by(Location, Treatment, Density, .draw) %>% 
+  summarise(.value=mean(.value/Neggs_all)) %>% 
+  ungroup() %>% 
+  ggplot()+
+  stat_eye(aes(Location, .value,fill=Density),position="dodge")+
+  geom_jitter(data=data_disp_dens,aes(Location,Neggs_arrival/Neggs_all, col=Density),position=position_dodge(width=0.5))+
+  #stat_pointinterval(data=data_disp,aes(Location,Neggs_arrival/Neggs_all), col="red")+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Effective dispersal rate")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+posterior_samples(mod_disp_dens) %>% 
+  select(contains("b_")) %>% 
+  select(contains("Density_centred")) %>% 
+  mutate(.draw=1:dim(.)[1]) %>% 
+  pivot_longer(cols=-.draw) %>%  
+  mutate(Location=case_when(str_detect(name,"stock")~"stock",
+                            str_detect(name,"core")~"core",
+                            str_detect(name,"edge")~"edge"),
+         Treatment=case_when(str_detect(name,"stock")~"stock",
+                            str_detect(name,"reference")~"reference",
+                            str_detect(name,"reduced")~"reduced connectivity")) %>% 
+  ggplot()+
+  stat_eye(aes(Location, value))+
+  geom_hline(yintercept=0,lty=2)+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Net effect of density on dispersal (logit scale)")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+
+  
+
+```
 
 
 
