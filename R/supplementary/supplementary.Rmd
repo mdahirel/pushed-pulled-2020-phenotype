@@ -1,0 +1,109 @@
+---
+title: "Supplementary Material for: \"Landscape connectivity alters the evolution of density-dependent dispersal during pushed range expansions\" "
+author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Ludovic Mailleret, Anaël Marchand, Elodie Vercken"
+date:
+output: 
+  html_document:
+    theme: yeti
+    toc: TRUE
+    toc_float: TRUE
+    code_download: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(arm)
+library(tidyverse)
+
+library(cmdstanr) 
+#library(rstan) 
+#rstan can be used as alternate backend; just don't forget to change the backend argument in each model
+library(brms)
+options(mc.cores = 2)
+
+library(bayesplot)
+
+library(tidybayes)
+
+library(patchwork)
+
+library(here)
+```
+
+# Context
+
+
+#load data
+
+```{r}
+
+raw_dynamics <- read_csv(here("data","expansion_data","Trichogramma_dynamics.csv"))
+
+raw_size <- read_csv(here("data","exp1_bodysize.csv"))
+
+raw_mvt <- read_csv(here("data","exp2_movement.csv"))
+
+raw_fec <- read_csv(here("data","exp2_fecundity.csv"))
+raw_disp <- read_csv(here("data","exp2_dispersal.csv"))
+
+raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
+raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
+```
+
+
+# suppl: CVpop
+don't forget that supplementary is thsi + model description + model comparison for disp with or without confounding variable Nall + pairwise comparisons for each model
+
+```{r}
+data_popsize<- raw_dynamics %>% 
+  mutate(Mix= as.numeric(str_sub(Image,1,1)),
+         Treatment = str_sub(Image,2,3),
+         Replicate = as.numeric(str_sub(Image,4,4)),
+         Patch = as.numeric(str_sub(Image,6,7))
+  ) %>% 
+  #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
+#or digit-digit (patches 10 and beyond)
+## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
+  mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
+         obsID=paste(landscapeID,"_Generation",Generation,"_Patch",Patch,sep=""), # a unique ID for each replicate x patch x generation combination
+         Mix = factor(Mix)) %>% 
+  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`reduced connectedness`="PS")) %>% 
+  group_by(landscapeID,Generation) %>% 
+  ungroup() %>% 
+  filter(Patch==0) %>% 
+  select(Macro,landscapeID,Generation,Treatment,obsID,Peggs_est,Mix)
+##to do : count local extinction and count "passed over"; maybe actually include them if too big ????
+```
+
+
+```{r}
+
+data_cv<-data_popsize %>%
+  ungroup() %>%
+  group_by(Treatment,landscapeID,Macro) %>% 
+  summarise(meanP=mean(Peggs_est,na.rm=TRUE),sdP=sd(Peggs_est,na.rm=TRUE)) %>% 
+  mutate(CV_P=sdP/meanP)
+
+
+mod=brm(CV_P~0+Treatment+(1|Macro),
+        family=lognormal,
+        data=data_cv,
+        seed=42,
+        prior=c(
+          set_prior("normal(0,1)",class="b"),
+          set_prior("normal(0,1)",class="sd"),
+          set_prior("normal(0,1)",class="sigma")
+        ), 
+        control=list(adapt_delta=0.99, max_treedepth=20),
+        iter=10000, chains=4, backend="cmdstanr"
+        )
+
+####will very obviously work , but need to solve divergenttransitions
+```
+
