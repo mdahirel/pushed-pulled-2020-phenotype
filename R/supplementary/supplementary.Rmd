@@ -55,6 +55,91 @@ raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
 raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
 ```
 
+```{r}
+
+preds_size <- data_size %>% 
+  select(context,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  unique() %>% 
+  add_fitted_draws(mod_size,re_formula = NA) %>% 
+  ungroup() %>% 
+  mutate(.value=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
+  select(.draw,.value,Treatment,Location,context)
+
+
+##no differences among treatments
+preds_size %>%  
+  compare_levels(.value,by=context) %>% 
+  ggplot()+
+  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
+  geom_vline(xintercept = 0) +
+  theme_bw()
+
+preds_mvt <- data_mvt %>% 
+  select(context,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_mvt,re_formula = NA) %>% 
+  ungroup()
+
+##no differences among treatments
+preds_mvt %>%  
+  compare_levels(.value,by=context) %>% 
+  ggplot()+
+  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
+  geom_vline(xintercept = 0) +
+  theme_bw()
+
+data_fec %>% 
+  select(Location, Treatment, context) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_fec,re_formula=NA) %>% 
+  ungroup() %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
+  select(Location, Treatment, context, .draw, .value) %>% 
+  compare_levels(.value, by = context) %>% 
+  mean_hdi()
+
+data_fec_dens %>%  
+  select(Location, Treatment, context, Density, Density_centred) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_fec_dens,re_formula=NA) %>%
+  ungroup() %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
+  select(Location, Treatment, context, Density, .draw, .value) %>% 
+  group_by(Density) %>% 
+  compare_levels(.value, by = context) %>% 
+  mean_hdi()
+
+data_disp_dens %>%  
+  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
+         Neggs_all = 1) %>% 
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_disp_dens,re_formula=NA) %>% 
+  ungroup() %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
+  select(Location, Treatment, context, Density, .draw, .value) %>% 
+  group_by(Density) %>% 
+  compare_levels(.value, by = context) %>% 
+  mean_hdi()
+
+data_disp %>%  
+  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
+         Neggs_all = 1) %>% 
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_disp,re_formula=NA) %>% 
+  ungroup() %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
+  select(Location, Treatment, context, .draw, .value) %>% 
+  compare_levels(.value, by = context) %>% 
+  mean_hdi()
+```
 
 # suppl: CVpop
 don't forget that supplementary is thsi + model description + model comparison for disp with or without confounding variable Nall + pairwise comparisons for each model

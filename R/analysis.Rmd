@@ -30,6 +30,7 @@ library(bayesplot)
 
 library(tidybayes)
 
+library(ggnewscale)
 library(patchwork)
 
 library(here)
@@ -41,9 +42,6 @@ library(here)
 #load data
 
 ```{r}
-
-raw_dynamics <- read_csv(here("data","expansion_data","Trichogramma_dynamics.csv"))
-
 raw_size <- read_csv(here("data","exp1_bodysize.csv"))
 
 raw_mvt <- read_csv(here("data","exp2_movement.csv"))
@@ -127,21 +125,13 @@ preds_size <- data_size %>%
   select(.draw,.value,Treatment,Location,context)
 
 ggplot(preds_size) +
-  stat_eye(aes(x=Location,y=.value),.width=c(0.01,0.95))+
   geom_jitter(data=data_size %>% 
                 group_by(Location,Treatment,IDindiv) %>% 
                 summarise(tibia=mean(tibia)),aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
+  stat_eye(aes(x=Location,y=.value),.width=c(0.01,0.95), slab_alpha=0.7)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Mean tibia length (μm)")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  theme_bw()
-
-##no differences among treatments
-preds_size %>%  
-  compare_levels(.value,by=context) %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  geom_vline(xintercept = 0) +
   theme_bw()
 
 ```
@@ -211,24 +201,14 @@ preds_mvt <- data_mvt %>%
   ungroup()
 
 ggplot(preds_mvt) +
-  stat_eye(aes(x=Location,y=.value), .width=c(0.01,0.95))+
   geom_jitter(data=data_mvt,aes(x=Location,y=activity_percent, size=obs_time),col="grey50",alpha=0.4)+
-  scale_size(range=c(1,4))+
+  scale_size(range=c(1,4), guide=FALSE)+
+  ggnewscale::new_scale("size")+
+  stat_eye(aes(x=Location,y=.value), .width=c(0.01,0.95), slab_alpha=0.7)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Proportion of time active")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  theme_bw()+
-  guides(size = FALSE)
-
-
-##no differences among treatments
-preds_mvt %>%  
-  compare_levels(.value,by=context) %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  geom_vline(xintercept = 0) +
   theme_bw()
-
 
 #posterior grand mean
 preds_mvt %>% 
@@ -368,10 +348,10 @@ p1 <- data_fec %>%
   mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
   mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
   ggplot()+
-  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02")+
   geom_jitter(data=data_fec,
               aes(Location,Fecundity),
               col="#d95f02",alpha=0.4)+
+  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02", slab_alpha=0.7)+
   scale_x_discrete("")+
   scale_y_continuous("# of hosts parasitised")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
@@ -386,11 +366,10 @@ p2 <- data_fec_dens %>%
   mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
   mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
   ggplot()+
-  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge")+
   geom_point(data=data_fec_dens,
              aes(Location,Fecundity, col=Density),
              position=position_jitterdodge(dodge.width=1), alpha=0.4)+
-  scale_size(range=c(1,4))+
+  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge", slab_alpha=0.7)+
   scale_x_discrete("")+
   scale_y_continuous("# of hosts parasitised")+
   scale_fill_manual(values=c("#d95f02","#7570b3")) + 
@@ -411,7 +390,7 @@ p3 <- data_fec_dens %>%
   pivot_wider(names_from=Density,values_from=.value) %>% 
   mutate(diff=log(high)-log(low)) %>% 
   ggplot()+
-  stat_eye(aes(Location, diff), .width=c(0.01,0.95))+
+  stat_eye(aes(Location, diff), .width=c(0.01,0.95),slab_alpha=0.7)+
   geom_hline(yintercept=0,lty=2)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Net effect of density (log scale)")+
@@ -470,6 +449,26 @@ mod_disp=brm(bf(Neggs_arrival|trials(Neggs_all)~context+Neggs_all_scaled+(1|Mix/
 
 think about adding the model minus Neggs_all_scaled and compare
 
+```{r}
+if (file.exists(here("R_output", "model_dispersal1_alt.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_dispersal1_alt.Rdata"))
+  } else {
+mod_disp_alt=brm(bf(Neggs_arrival|trials(Neggs_all)~context+(1|Mix/IDgroup/IDpop)),
+         data=data_disp,family=binomial,
+         chains=4,iter=4000,
+         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
+                 set_prior("normal(0,1)",class="b"),
+                 set_prior("normal(0,1)",class="sd")),
+         seed=42,control=list(adapt_delta=0.99), backend="cmdstanr"
+)
+  save(list = "mod_disp_alt", file = here("R_output", "model_dispersal1_alt.Rdata"))
+}
+```
+
+
 # Dispersal 2
 
 ```{r}
@@ -518,6 +517,26 @@ mod_disp_dens=brm(bf(Neggs_arrival|trials(Neggs_all)~context*Density_centred+Neg
 }
 ```
 
+```{r}
+if (file.exists(here("R_output", "model_dispersal2_alt.Rdata")))
+# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  {
+    load(here("R_output", "model_dispersal2_alt.Rdata"))
+  } else {
+mod_disp_dens_alt=brm(bf(Neggs_arrival|trials(Neggs_all)~context*Density_centred+(1|Mix/IDgroup/IDpop)),
+         data=data_disp_dens,family=binomial,
+         chains=4,iter=4000,
+         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
+                 set_prior("normal(0,1)",class="b"),
+                 set_prior("normal(0,1)",class="sd")),
+         seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
+)
+
+  save(list = "mod_disp_dens_alt", file = here("R_output", "model_dispersal2_alt.Rdata"))
+}
+```
+
 ```{r summary-model}
 ###prediction intervals around each point
 ppc_ribbon(yrep=(predict(mod_disp_dens,summary=FALSE)),
@@ -538,17 +557,17 @@ p1 <- data_disp %>%
   mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
   mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
   ggplot()+
-  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02")+
   geom_jitter(data=data_disp,
               aes(Location,Neggs_arrival/Neggs_all, size=Neggs_all),
-              col="#d95f02",alpha=0.4)+
-  scale_size(range=c(1,4))+
+              col="#d95f02",alpha=0.4)+  
+  scale_size(range=c(1,4), guide=FALSE)+
+  ggnewscale::new_scale("size")+
+  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02", slab_alpha=0.7)+
   scale_x_discrete("")+
   scale_y_continuous("Effective dispersal rate")+
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   coord_cartesian(ylim=c(0,1))+
-  theme_bw()+
-  guides(size = FALSE)
+  theme_bw()
 
 
 p2 <- data_disp_dens %>%  
@@ -560,36 +579,33 @@ p2 <- data_disp_dens %>%
   mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
   mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
   ggplot()+
-  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge")+
   geom_point(data=data_disp_dens,
              aes(Location,Neggs_arrival/Neggs_all, col=Density, size=Neggs_all),
              position=position_jitterdodge(dodge.width=1), alpha=0.4)+
-  scale_size(range=c(1,4))+
+  scale_size(range=c(1,4), guide=FALSE)+
+  ggnewscale::new_scale("size")+
+  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge", slab_alpha=0.7)+
   scale_x_discrete("")+
   scale_y_continuous("Effective dispersal rate")+
   scale_fill_manual(values=c("#d95f02","#7570b3")) + 
   scale_colour_manual(values=c("#d95f02","#7570b3")) + 
   facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
   coord_cartesian(ylim=c(0,1))+
-  theme_bw()+
-  guides(size = FALSE)
+  theme_bw()
 
-p3 <- posterior_samples(mod_disp_dens) %>% 
-  select(contains("Density_centred")) %>% 
-  mutate(.draw=1:dim(.)[1]) %>% 
-  mutate(b_stock=0) %>% #dummy column to facilitate additions below
-  rename(baseline=b_Density_centred) %>% 
-  pivot_longer(cols=-c(baseline,.draw)) %>%  
-  mutate(Location=case_when(str_detect(name,"stock")~"stock",
-                            str_detect(name,"core")~"core",
-                            str_detect(name,"edge")~"edge"),
-         Treatment=case_when(str_detect(name,"stock")~"stock",
-                            str_detect(name,"reference")~"reference",
-                            str_detect(name,"reduced")~"reduced connectivity")) %>% 
+p3 <- data_disp_dens %>%  
+  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
+         Neggs_all = 1) %>% 
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_disp_dens,re_formula=NA) %>% 
+  ungroup() %>% 
   mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
+  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% select(Location, Treatment, Density, .value, .draw) %>% 
+  pivot_wider(names_from=Density,values_from=.value) %>% 
+  mutate(diff=logit(high)-logit(low)) %>% 
   ggplot()+
-  stat_eye(aes(Location, value+baseline), .width=c(0.01,0.95))+
+  stat_eye(aes(Location, diff), .width=c(0.01,0.95),slab_alpha=0.7)+
   geom_hline(yintercept=0,lty=2)+
   scale_x_discrete("Experimental context")+
   scale_y_continuous("Net effect of density (logit scale)")+
@@ -597,7 +613,9 @@ p3 <- posterior_samples(mod_disp_dens) %>%
   coord_cartesian(ylim=c(-3,3))+
   theme_bw()
 
+
 (p1/p2/p3) & plot_annotation(tag_levels = "A")
 
 ```
 
+ easy to replace the models with their alt in chunk above to see inferences remain especially relative to DDD
