@@ -21,36 +21,24 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r load-packages}
-library(arm)
 library(tidyverse)
-
-library(cmdstanr) 
-#library(rstan) 
-#rstan can be used as alternate backend; just don't forget to change the backend argument in each model
 library(brms)
-options(mc.cores = 2)
-
-library(bayesplot)
-
 library(tidybayes)
-
-library(patchwork)
-
 library(here)
 ```
 
 # S.1 - Model descriptions
 
-We outline here the full structure of the models presented in the main text, as well as the corresponding priors. Prior choices and most of the notation conventions mostly follow McElreath [-@mcelreath2020]. We use the $\mathrm{Half-Normal}(0,\sigma)$ notation to denote a half-normal distribution based on a $\mathrm{Normal}(0,\sigma)$ distribution.
+We outline here the structure of the models presented in the main text, as well as the corresponding priors. Notation conventions and (weakly informative) prior choices mostly follow McElreath [-@mcelreath2020]. We use the $\mathrm{Half-Normal}(0,\sigma)$ notation to denote a half-normal distribution based on a $\mathrm{Normal}(0,\sigma)$ distribution.
 
-## S.1.1 - Wasp size
+## Wasp size
 
 After centring and standardising to unit 1SD, tibia lengths $z_{m,i,j,k,o}$ with $m$ the genetic mix of origin, $i$ the experimental landscape of origin, $j$ the source population (core, edge or stock) and $k$ the individual (each individual measured twice, $o$ denoting the observer) can be described by the following model:
 
 $$
 \begin{equation}
 z_{m,i,j,k,o} \sim \mathrm{Normal}(\mu_{m,i,j,k},\sigma_{r}), \\
-\mu_{m,i,j,k} = \beta_{0} + \sum \beta_{1[i,j]} \times x_{[i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j} + \eta_{k}, \\
+\mu_{m,i,j,k} = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j} + \eta_{k}, \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}), \\
@@ -58,16 +46,16 @@ z_{m,i,j,k,o} \sim \mathrm{Normal}(\mu_{m,i,j,k},\sigma_{r}), \\
 \end{equation}
 $$
 
-In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{1}$ the fixed-effect deviations from this starting size due to the experimental context, and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ for all standard deviations (including residual standard deviation $\sigma_{r}$), following McElreath [-@mcelreath2020].
+In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ for all standard deviations (including residual standard deviation $\sigma_{r}$), following McElreath [-@mcelreath2020].
 
-## S.1.2 - Short-term activity
+## Short-term activity
 
-For activity, we analyse the proportion of time spent active $P_{m,i,j,k}$, with again $m$ denoting the mix of origin, $i$ the landscape and $j$ the population. $k$ here corresponds to the replicate, as several independent sub-groups were tested per population of origin. For reasons outlined in the main text, we analyse replicate-level aggregate metrics. These proportions can be analysed using a Beta model, which uses here the (mean, precision) parametrisation of the Beta distribution:
+For activity, we analyse the proportion of time spent active $P_{m,i,j,k}$, with again $m$ denoting the mix of origin, $i$ the landscape and $j$ the population. $k$ here corresponds to the replicate, as several independent sub-groups were tested per population of origin. For reasons outlined in the main text, we analyse replicate-level aggregate metrics, not individual-level traits. These proportions can be analysed using a Beta model, which uses here the (mean, precision) parametrisation of the Beta distribution:
 
 $$
 \begin{equation}
 P_{m,i,j,k} \sim \mathrm{Beta}(p_{m,i,j}, \phi), \\
-\mathrm{logit}(p_{m,i,j}) = \beta_{0} + \sum \beta_{1[i,j]} \times x_{[i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+\mathrm{logit}(p_{m,i,j}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}), \\
@@ -75,15 +63,15 @@ P_{m,i,j,k} \sim \mathrm{Beta}(p_{m,i,j}, \phi), \\
 $$
 Priors for fixed and random effects are as in **S.1.1**. We set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the precision parameter ($1/\phi$), following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
-## S.1.3 - Fecundity models
+## Fecundity models
 
-The total number of hosts successfully parasitised by a wasp in 24h $y$ is best described by a zero-inflated negative binomial model, with $\lambda$ the mean fecundity absent zero-inflation and $\p$ the probability of excess zeroes:
+The total number of hosts successfully parasitised by a wasp in 24h $F$ is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
 
 $$
 \begin{equation}
-y \sim \mathrm{ZINegativeBinomial}(p,\phi,\lambda), \\
-\log(\lambda_{m,i,j}) = \beta_{0} + \sum \beta_{1[i,j]} \times x_{[i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
-\mathrm{logit}(p) = \beta_{10} + \sum \beta_{1[i,j]} \times x_{[i,j]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
+F \sim \mathrm{ZINegativeBinomial}(p,\lambda,\phi), \\
+\log(\lambda_{m,i,j}) = \beta_{0[\lambda]} + \sum_{n=1}^{N} \beta_{n[\lambda]} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+\mathrm{logit}(p) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
@@ -92,31 +80,35 @@ y \sim \mathrm{ZINegativeBinomial}(p,\phi,\lambda), \\
 \theta_{j} \sim \mathrm{Normal}(0,\sigma_{\theta}). \\
 \end{equation}
 $$
-
-Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters corresponding to the logit of a proportion. the exception of the prior for the intercepts $\beta_{0}$. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SD corresponding to genetic mix $\sigma_{XXX}$ here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
+$\beta_{n}$ here include, in addition to the effects of context, the effect of (standardised) total number of offspring and (in the model for the density-dependent experiment) effects of density and density × context interactions.  
+Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component ($\beta_{0[\lambda]}$) was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component ($\beta_{0[p]}$) was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters corresponding to the logit of a proportion. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SDs corresponding to genetic mix ($\sigma_{\alpha}$, $\sigma_{\nu}$) here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
 Finally, we set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the shape parameter ($1/\phi$), again following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
-## S.1.4 - Dispersal models
+## Effective dispersal models
 
-Our measure of effective dispersal is the proportion of offspring $n_{m,i,j,k}/N_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $N_{m,i,j,k}$). This can be analysed using binomial models:
+Our measure of effective dispersal is the proportion of offspring $f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analysed using binomial models:
 
 $$
 \begin{equation}
-n_{m,i,j,k} \sim \mathrm{Binomial}(p_{m,i,j}, N_{m,i,j,k}). \\
-\mathrm{logit}(p_{m,i,j}) = \beta_{0} + \sum \beta_{1[i,j]} \times x_{[i,j]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+f_{m,i,j,k} \sim \mathrm{Binomial}(p_{m,i,j}, F_{m,i,j,k}). \\
+\mathrm{logit}(p_{m,i,j}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
 \end{equation}
 $$
-Priors for fixed and random effects are as in **S.1.1**, with the exception of the prior for the intercepts $\beta_{0}$. As this parameter denotes the logit of a proportion, we used $\mathrm{Normal}(0,1.5)$ priors [@mcelreath2020].
+$\beta_{n}$ here include, in addition to the effects of context, the effect of (standardised) total number of offspring and (in the model for the density-dependent experiment) effects of density and density × context interactions. Priors for fixed and random effects are as in **S.1.1**, with the exception of the prior for the intercepts $\beta_{0}$. As this parameter denotes the logit of a proportion, we used $\mathrm{Normal}(0,1.5)$ priors [@mcelreath2020].
 
 # S.2 - Posterior pairwise comparisons between treatments
 
 ```{r load-raw-data}
+##we're going to need a reference table with all the covariates of interest as a base to generate the predictions to compare
+
+## let's do that using one of the original dataset as a starting point:
+
 raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
 
-data_disp_dens<-raw_disp_dens %>% 
+template <- raw_disp_dens %>% 
                 mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
                 mutate(Treatment=fct_recode(factor(Treatment),
                                             reference="control",
@@ -129,13 +121,24 @@ data_disp_dens<-raw_disp_dens %>%
                 mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
 
 
-template <- data_disp_dens %>% 
+template <- template %>% 
   select(Treatment,Location,Density,Density_centred,context) %>% 
   mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
   distinct() %>% 
   mutate(Neggs_all_scaled = 0,
          Neggs_all = 1)
+
+## and we also need the info about tibia mean and SD
+raw_size <- read_csv(here("data","exp1_bodysize.csv"))
+
+summary_size <- raw_size %>%
+  pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
+  filter(is.na(tibia)==FALSE) %>% 
+  summarise(mean=mean(tibia),sd=sd(tibia))
+
 ```
+
+## Wasp size
 
 ```{r pairwise-size}
 load(here("R_output", "model_size.Rdata"))
@@ -153,7 +156,10 @@ template %>%
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
-<!--think about giving the SD in the legend-->
+
+**Figure S.2.1** - Pairwise between-context differences in predicted wasp size (tibia length). Black dots and segments are posterior means and 95% credible intervals; differences are given in SD units (1SD = `r round(summary_size$sd,1)` μm).
+
+## Short-term activity
 
 ```{r pairwise-activity}
 load(here("R_output", "model_mvt.Rdata"))
@@ -172,6 +178,9 @@ template %>%
   theme_bw()
 ```
 
+**Figure S.2.2** - Pairwise between-context differences in predicted probability of activity. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
+
+## Fecundity
 
 ```{r pairwise-fecundity1}
 load(here("R_output", "model_fecundity1.Rdata"))
@@ -191,6 +200,7 @@ template %>%
   theme_bw()
 ```
 
+**Figure S.2.3** - Pairwise between-context differences in predicted reproductive success in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale.
 
 ```{r pairwise-fecundity2}
 load(here("R_output", "model_fecundity2.Rdata"))
@@ -213,6 +223,9 @@ template %>%
   facet_wrap(~Density)
 ```
 
+**Figure S.2.4** - Pairwise between-context differences in predicted reproductive success in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 4C**.
+
+## Effective dispersal
 
 ```{r pairwise-dispersal1}
 load(here("R_output", "model_dispersal1.Rdata"))
@@ -230,6 +243,8 @@ template %>%
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
+
+**Figure S.2.5** - Pairwise between-context differences in effective dispersal in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
 
 ```{r pairwise-dispersal2}
 load(here("R_output", "model_dispersal2.Rdata"))
@@ -252,10 +267,13 @@ template %>%
   facet_wrap(~Density)
 ```
 
+**Figure S.2.6** - Pairwise between-context differences in effective dispersal in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 5C**.
 
 # S.3 - Effect of experimental connectivity level on demographic variability
 
-In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways. To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals). We do have access to population size estimates for this experiment. These data are re-used from [@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population size were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
+In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways.  
+To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals).  
+We do have access to population size estimates for this experiment. These data are re-used from Dahirel et al. [-@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population size were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
 
 ```{r data-processing-cv}
 
@@ -317,7 +335,7 @@ mod_cv <- brm(CV_P ~ Treatment + (1|Macro) + (1|Mix),
 ratio_cv <- posterior_samples(mod_cv) %>% select("b_Treatmentreducedconnectivity") %>% exp() %>% mean_hdi()
 ```
 
-We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r round(ratio_cv$b_Treatmentreducedconnectivity,2)` [`r round(ratio_cv$.lower,2)`, `r round(ratio_cv$.upper,2)`] times the one of reference patches (**Fig. S.3-1**).
+We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r round(ratio_cv$b_Treatmentreducedconnectivity,2)` [`r round(ratio_cv$.lower,2)`, `r round(ratio_cv$.upper,2)`] times the one of reference patches (**Fig. S.3.1**).
 
 ```{r fig-cv}
 data_cv %>% 
@@ -337,6 +355,6 @@ data_cv %>%
   theme_bw()
 ```
 
-**Figure S.3-1** - Posterior predicted demographic variability (Population size coefficient of variation) in core patches ($x = 0$) as a function of connectivity treatment. Black dots and segments are posterior means and 95% credible intervals, gray dots are observed values (averaged across "observer" macros).
+**Figure S.3.1** - Posterior predicted demographic variability (Population size coefficient of variation) in core patches ($x = 0$) as a function of connectivity treatment. Black dots and segments are posterior means and 95% credible intervals, gray dots are observed values (averaged across "observer" macros).
 
 # References
