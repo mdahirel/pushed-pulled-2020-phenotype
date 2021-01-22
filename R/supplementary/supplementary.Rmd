@@ -17,7 +17,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r load-packages}
 library(arm)
 library(tidyverse)
 
@@ -36,11 +36,11 @@ library(patchwork)
 library(here)
 ```
 
-# Context
+# S.1 - model descriptions
 
-\#load data
-
-```{r}
+# S.2 - pairwise plots (+ goodness of fits plots? + r2?)
+ 
+```{r load-raw-data}
 
 raw_dynamics <- read_csv(here("data","expansion_data","Trichogramma_dynamics.csv"))
 
@@ -141,7 +141,7 @@ data_disp %>%
   mean_hdi()
 ```
 
-# S.X - Effect of experimental connectivity level on demographic variability
+# S.3 - Effect of experimental connectivity level on demographic variability
 
 In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways. To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals). We do have access to population size estimates for this experiment. These data are re-used from [@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population size were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
 
@@ -184,22 +184,23 @@ if (file.exists(here("R_output", "model_suppl_CV.Rdata"))){
 mod_cv <- brm(CV_P ~ Treatment + (1|Macro) + (1|Mix),
         family=lognormal,
         data=data_cv,
-        seed=42,
         prior=c(
           set_prior("normal(0,1)",class="b"),
           set_prior("normal(0,1)",class="sd"),
           set_prior("normal(0,1)",class="sigma")
         ), 
         control=list(adapt_delta=0.99, max_treedepth=20),
-        iter=4000, chains=4, backend="cmdstanr"
+        
+        chains=4, iter=4000, warmup = 2000, seed=42, backend="cmdstanr"
         )
+
   save(list = "mod_cv", file = here("R_output", "model_suppl_CV.Rdata"))
   }
 
 ratio_cv <- posterior_samples(mod_cv) %>% select("b_Treatmentreducedconnectivity") %>% exp() %>% mean_hdi()
 ```
 
-We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r ratio_cv$b_Treatmentreducedconnectivity` [`r ratio_cv$.lower`, `r ratio_cv$.upper`] times the one of reference patches (**Fig. S.X**).
+We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r ratio_cv$b_Treatmentreducedconnectivity` [`r ratio_cv$.lower`, `r ratio_cv$.upper`] times the one of reference patches (**Fig. S.3-1**).
 
 ```{r fig-cv}
 data_cv %>% 
@@ -219,4 +220,4 @@ data_cv %>%
   theme_bw()
 ```
 
-**Figure S.X** - Posterior predicted demographic variability (Population size coefficient of variation) in core patches ($x = 0$) as a function of connectivity treatment. Black dots and segments are posterior means and 95% credible intervals, gray dots are observed values (averaged across "observer" macros).
+**Figure S.3-1** - Posterior predicted demographic variability (Population size coefficient of variation) in core patches ($x = 0$) as a function of connectivity treatment. Black dots and segments are posterior means and 95% credible intervals, gray dots are observed values (averaged across "observer" macros).
