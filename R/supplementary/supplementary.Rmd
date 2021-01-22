@@ -10,6 +10,7 @@ output:
     code_download: TRUE
 editor_options: 
   chunk_output_type: console
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -37,8 +38,7 @@ library(here)
 
 # Context
 
-
-#load data
+\#load data
 
 ```{r}
 
@@ -141,11 +141,12 @@ data_disp %>%
   mean_hdi()
 ```
 
-# suppl: CVpop
-don't forget that supplementary is thsi + model description + model comparison for disp with or without confounding variable Nall + pairwise comparisons for each model
+# S.X - Effect of experimental connectivity level on demographic variability
 
-```{r}
-data_popsize<- raw_dynamics %>% 
+In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways. To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals). We do have access to population size estimates for this experiment. These data are re-used from [@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population size were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
+
+```{r data-processing-cv}
+data_cv <- raw_dynamics %>% 
   mutate(Mix= as.numeric(str_sub(Image,1,1)),
          Treatment = str_sub(Image,2,3),
          Replicate = as.numeric(str_sub(Image,4,4)),
@@ -154,29 +155,33 @@ data_popsize<- raw_dynamics %>%
   #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
 #or digit-digit (patches 10 and beyond)
 ## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  filter(Patch==0) %>% #we only keep the core patch for this analysis
   mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
   mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
-         obsID=paste(landscapeID,"_Generation",Generation,"_Patch",Patch,sep=""), # a unique ID for each replicate x patch x generation combination
          Mix = factor(Mix)) %>% 
-  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`reduced connectedness`="PS")) %>% 
-  group_by(landscapeID,Generation) %>% 
-  ungroup() %>% 
-  filter(Patch==0) %>% 
-  select(Macro,landscapeID,Generation,Treatment,obsID,Peggs_est,Mix)
-##to do : count local extinction and count "passed over"; maybe actually include them if too big ????
+  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`reduced connectivity`="PS")) %>% 
+  group_by(Treatment,landscapeID,Macro,Mix) %>% 
+  summarise(meanP=mean(Peggs_est,na.rm=TRUE),sdP=sd(Peggs_est,na.rm=TRUE)) %>% 
+  mutate(CV_P=sdP/meanP) %>% 
+  ungroup()
 ```
 
+We analyse coefficients of variation using a lognormal mixed model:
 
-```{r}
+$$
+\mathrm{CV}_{i,j,m} \sim \mathrm{LogNormal}(\mu_{i,j,m}, \sigma_{d}), \\
+\mu_{i,j,m} = \beta_{0} + \beta_1 \times x_{i} + \alpha_{j} + \gamma_{m}, \\
+\alpha_{j} \sim \mathrm{Normal}(0, \sigma_{\alpha}), \\
+\gamma_{m} \sim \mathrm{Normal}(0, \sigma_{\gamma}), \\
+$$
 
-data_cv<-data_popsize %>%
-  ungroup() %>%
-  group_by(Treatment,landscapeID,Macro) %>% 
-  summarise(meanP=mean(Peggs_est,na.rm=TRUE),sdP=sd(Peggs_est,na.rm=TRUE)) %>% 
-  mutate(CV_P=sdP/meanP)
+where the $CV_{i,j,m}$ of replicate $i$ from genetic mix $j$ as seen by macro $m$ depends on its connectivity level and on random effects of mix and macro. We use $\mathrm{Normal}(0,1)$ priors for fixed effects and $\mathrm{halfNormal}(0,1)$ for all $\sigma$ (random effects and residuals).
 
-
-mod=brm(CV_P~0+Treatment+(1|Macro),
+```{r model-cv}
+if (file.exists(here("R_output", "model_suppl_CV.Rdata"))){
+    load(here("R_output", "model_suppl_CV.Rdata"))
+  } else {
+mod_cv <- brm(CV_P ~ Treatment + (1|Macro) + (1|Mix),
         family=lognormal,
         data=data_cv,
         seed=42,
@@ -186,9 +191,32 @@ mod=brm(CV_P~0+Treatment+(1|Macro),
           set_prior("normal(0,1)",class="sigma")
         ), 
         control=list(adapt_delta=0.99, max_treedepth=20),
-        iter=10000, chains=4, backend="cmdstanr"
+        iter=4000, chains=4, backend="cmdstanr"
         )
+  save(list = "mod_cv", file = here("R_output", "model_suppl_CV.Rdata"))
+  }
 
-####will very obviously work , but need to solve divergenttransitions
+ratio_cv <- posterior_samples(mod_cv) %>% select("b_Treatmentreducedconnectivity") %>% exp() %>% mean_hdi()
 ```
 
+We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r ratio_cv$b_Treatmentreducedconnectivity` [`r ratio_cv$.lower`, `r ratio_cv$.upper`] times the one of reference patches (**Fig. S.X**).
+
+```{r fig-cv}
+data_cv %>% 
+  select(Treatment) %>% 
+  distinct() %>% 
+  add_fitted_draws(mod_cv,re_formula=NA) %>% 
+  ungroup() %>% 
+  ggplot() +
+  geom_jitter(data=data_cv %>% 
+                group_by(Treatment,landscapeID) %>%
+                summarise(CV_P=mean(CV_P)), # each point = one pop (average of the four macros/observers)
+              aes(x=Treatment,y=CV_P),col="grey50",alpha=0.4,size=2)+
+  stat_eye(aes(x=Treatment,y=.value), .width=c(0.01,0.95), slab_alpha=0.7)+
+  scale_x_discrete("Connectivity treatment")+
+  scale_y_continuous("Core patch (x = 0) population size CV during range expansion")+
+  coord_cartesian(ylim=c(0,1.5))+
+  theme_bw()
+```
+
+**Figure S.X** - Posterior predicted demographic variability (Population size coefficient of variation) in core patches ($x = 0$) as a function of connectivity treatment. Black dots and segments are posterior means and 95% credible intervals, gray dots are observed values (averaged across "observer" macros).
