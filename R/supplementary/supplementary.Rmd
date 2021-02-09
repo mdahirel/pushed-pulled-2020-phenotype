@@ -1,6 +1,6 @@
 ---
 title: "Supplementary Material for: \"Landscape connectivity alters the evolution of density-dependent dispersal during pushed range expansions\" "
-author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Ludovic Mailleret, Anaël Marchand, Elodie Vercken"
+author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Ludovic Mailleret, Anaël Marchand, Eric Lombaert, Elodie Vercken"
 date:
 output: 
   html_document:
@@ -69,9 +69,9 @@ The total number of hosts successfully parasitised by a wasp in 24h $F$ is best 
 
 $$
 \begin{equation}
-F \sim \mathrm{ZINegativeBinomial}(p,\lambda,\phi), \\
+F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j},\lambda_{m,i,j},\phi), \\
 \log(\lambda_{m,i,j}) = \beta_{0[\lambda]} + \sum_{n=1}^{N} \beta_{n[\lambda]} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
-\mathrm{logit}(p) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
+\mathrm{logit}(p_{m,i,j}) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
