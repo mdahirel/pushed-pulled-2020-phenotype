@@ -163,10 +163,12 @@ data_mvt<-raw_mvt %>%
                 summarise(percentData=mean(percentData), ##this column is already a testing_unit- level variable
                           activity_time=sum(path_duration*activity_percent),
                           obs_time=sum(path_duration),
-                          sinuosity=mean(sinuosity,na.rm=TRUE),
-                          mean_speed=mean(path_length/path_duration,na.rm=TRUE)
+                          sinuosity=weighted.mean(sinuosity,path_duration,na.rm=TRUE),
+                          mean_speed2=mean(path_length/path_duration,na.rm=TRUE),
+                          dist_total=sum(path_length,na.rm=TRUE)
                           ) %>% 
-                mutate(activity_percent=activity_time/obs_time) %>% 
+                mutate(activity_percent=activity_time/obs_time,
+                       mean_speed1=dist_total/obs_time) %>% 
   ungroup()
 ```
 
