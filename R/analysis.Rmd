@@ -162,7 +162,9 @@ data_mvt<-raw_mvt %>%
                 group_by(Mix,Treatment,Generation,Replicate,Location,IDgroup,IDpop,IDtest,context) %>% 
                 summarise(percentData=mean(percentData), ##this column is already a testing_unit- level variable
                           activity_time=sum(path_duration*activity_percent),
-                          obs_time=sum(path_duration)
+                          obs_time=sum(path_duration),
+                          sinuosity=mean(sinuosity,na.rm=TRUE),
+                          mean_speed=mean(path_length/path_duration,na.rm=TRUE)
                           ) %>% 
                 mutate(activity_percent=activity_time/obs_time) %>% 
   ungroup()
@@ -188,7 +190,9 @@ mod_mvt=brm(bf(activity_percent~context+(1|Mix/IDgroup/IDpop),
         seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
 )
   save(list = "mod_mvt", file = here("R_output", "model_mvt.Rdata"))
-}
+  }
+
+### to do: model with speed???
 ```
 
 
