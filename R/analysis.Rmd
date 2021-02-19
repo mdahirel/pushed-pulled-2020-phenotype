@@ -11,7 +11,7 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-
+!!! think about updating title and author list - 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -24,7 +24,7 @@ library(cmdstanr)
 #library(rstan) 
 #rstan can be used as alternate backend; just don't forget to change the backend argument in each model
 library(brms)
-options(mc.cores = 2)
+options(mc.cores = 4) # for the number of chains running in parallel (reduce if needed, models will just take longer to run)
 
 library(bayesplot)
 
@@ -542,6 +542,8 @@ mod_disp_dens_alt=brm(bf(Neggs_arrival|trials(Neggs_all)~context*Density_centred
   save(list = "mod_disp_dens_alt", file = here("R_output", "model_dispersal2_alt.Rdata"))
 }
 ```
+
+
 
 ```{r summary-model}
 ###prediction intervals around each point
