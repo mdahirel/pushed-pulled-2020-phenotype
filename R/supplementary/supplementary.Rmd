@@ -21,10 +21,10 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r load-packages}
-library(tidyverse)
-library(brms)
-library(tidybayes)
-library(here)
+library(tidyverse) # CRAN v1.3.0
+library(brms)      # CRAN v2.14.4
+library(tidybayes) # CRAN v2.3.1
+library(here)      # CRAN v1.0.1
 ```
 
 # S.1 - Model descriptions
@@ -166,7 +166,7 @@ load(here("R_output", "model_mvt.Rdata"))
 
 template %>% 
   filter(Density=="low") %>%
-  add_fitted_draws(mod_mvt,re_formula = NA, scale= "linear") %>% 
+  add_fitted_draws(mod_activity,re_formula = NA, scale= "linear") %>% 
   ungroup() %>% 
   select(.draw,.value,Treatment,Location,context) %>% 
   compare_levels(.value,by=context) %>% 
