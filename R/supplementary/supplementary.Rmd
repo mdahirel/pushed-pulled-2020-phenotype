@@ -1,6 +1,6 @@
 ---
 title: "Supplementary Material for: \"Landscape connectivity alters the evolution of density-dependent dispersal during pushed range expansions\" "
-author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Ludovic Mailleret, Anaël Marchand, Eric Lombaert, Elodie Vercken"
+author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Eric Lombaert, Ludovic Mailleret, Anaël Marchand, Elodie Vercken"
 date:
 output: 
   html_document:
@@ -17,7 +17,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 ## NOTE FOR PEOPLE WHO WOULD WANT TO RE-RUN THE ANALYSES IN THIS FILE:
-## most if not all of the models run in the main script need to have been run and saved for this file to knit correctly
+## please have note that all models in the main script need to have been run and saved for this file to re-knit correctly
 ```
 
 ```{r load-packages}
@@ -46,11 +46,11 @@ z_{m,i,j,k,o} \sim \mathrm{Normal}(\mu_{m,i,j,k},\sigma_{r}), \\
 \end{equation}
 $$
 
-In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ for all standard deviations (including residual standard deviation $\sigma_{r}$), following McElreath [-@mcelreath2020].
+In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ priors for all standard deviations (including residual standard deviation $\sigma_{r}$), following McElreath [-@mcelreath2020].
 
 ## Short-term activity
 
-For activity, we analyse the proportion of time spent active $P_{m,i,j,k}$, with again $m$ denoting the mix of origin, $i$ the landscape and $j$ the population. $k$ here corresponds to the replicate, as several independent sub-groups were tested per population of origin. For reasons outlined in the main text, we analyse replicate-level aggregate metrics, not individual-level traits. These proportions can be analysed using a Beta model, which uses here the (mean, precision) parametrisation of the Beta distribution:
+For activity, we analyze the proportion of time spent active $P_{m,i,j,k}$, with again $m$ denoting the mix of origin, $i$ the landscape and $j$ the population. $k$ here corresponds to the replicate, as several independent sub-groups were tested per population of origin. For reasons outlined in the main text, we analyze replicate-level aggregate metrics, not individual-level traits. These proportions can be analyzed using a Beta model, which uses here the (mean, precision) parameterisation of the Beta distribution:
 
 $$
 \begin{equation}
@@ -61,7 +61,7 @@ P_{m,i,j,k} \sim \mathrm{Beta}(p_{m,i,j}, \phi), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}), \\
 \end{equation}
 $$
-Priors for fixed and random effects are as in **S.1.1**. We set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the precision parameter ($1/\phi$), following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
+Priors for fixed and random effects are as in **S.1.1**, except for the intercept $\beta_{0}$ which was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters interpretable as the logit of a proportion. We set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the precision parameter ($1/\phi$), following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
 ## Fecundity models
 
@@ -69,9 +69,9 @@ The total number of hosts successfully parasitised by a wasp in 24h $F$ is best 
 
 $$
 \begin{equation}
-F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j},\lambda_{m,i,j},\phi), \\
-\log(\lambda_{m,i,j}) = \beta_{0[\lambda]} + \sum_{n=1}^{N} \beta_{n[\lambda]} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
-\mathrm{logit}(p_{m,i,j}) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
+F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j,k},\lambda_{m,i,j,k},\phi), \\
+\log(\lambda_{m,i,j,k}) = \beta_{0[\lambda]} + \sum_{n=1}^{N} \beta_{n[\lambda]} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+\mathrm{logit}(p_{m,i,j,k}) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
@@ -80,7 +80,7 @@ F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j},\lambda_{m,i,j},\phi), \\
 \theta_{j} \sim \mathrm{Normal}(0,\sigma_{\theta}). \\
 \end{equation}
 $$
-$\beta_{n}$ here include, in addition to the effects of context, the effect of (standardised) total number of offspring and (in the model for the density-dependent experiment) effects of density and density × context interactions.  
+In the model for the density-dependent experiment, $\beta_{n}$ include, in addition to the effects of context, effects of density and density × context interactions.  
 Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component ($\beta_{0[\lambda]}$) was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component ($\beta_{0[p]}$) was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters corresponding to the logit of a proportion. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SDs corresponding to genetic mix ($\sigma_{\alpha}$, $\sigma_{\nu}$) here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
 Finally, we set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the shape parameter ($1/\phi$), again following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
@@ -90,8 +90,8 @@ Our measure of effective dispersal is the proportion of offspring $f_{m,i,j,k}/F
 
 $$
 \begin{equation}
-f_{m,i,j,k} \sim \mathrm{Binomial}(p_{m,i,j}, F_{m,i,j,k}). \\
-\mathrm{logit}(p_{m,i,j}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+f_{m,i,j,k} \sim \mathrm{Binomial}(F_{m,i,j,k}, p_{m,i,j,k}), \\
+\mathrm{logit}(p_{m,i,j,k}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
 \zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
@@ -144,11 +144,11 @@ summary_size <- raw_size %>%
 load(here("R_output", "model_size.Rdata"))
 
 template %>% 
-  filter(Density=="low") %>% 
-  add_fitted_draws(mod_size,re_formula = NA) %>% 
+  filter(Density=="low") %>% ## only 1 density in size data, so we discard that part of the template
+  add_fitted_draws(mod_size,re_formula = NA) %>% # we add fitted values
   ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context) %>% 
-  compare_levels(.value,by=context) %>% 
+  select(.draw,.value,Treatment,Location,context) %>% # we select only relevant variables
+  compare_levels(.value,by=context) %>% # we compare pair by pair
   ggplot()+
   stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
   scale_x_continuous("Posterior difference between contexts (in SD units)")+
@@ -165,7 +165,7 @@ template %>%
 load(here("R_output", "model_mvt.Rdata"))
 
 template %>% 
-  filter(Density=="low") %>% 
+  filter(Density=="low") %>%
   add_fitted_draws(mod_mvt,re_formula = NA, scale= "linear") %>% 
   ungroup() %>% 
   select(.draw,.value,Treatment,Location,context) %>% 
@@ -310,7 +310,7 @@ $$
 \end{equation}
 $$
 
-where the $CV_{m,i,o}$ of replicate $i$ from genetic mix $m$ as seen by "observer"/macro $o$ depends on its connectivity level $x_{1}$ and on random effects of mix and macro. We use $\mathrm{Normal}(0,1)$ priors for fixed effects and $\mathrm{Half-Normal}(0,1)$ for all $\sigma$ (random effects and residuals).
+where the $CV_{m,i,o}$ of replicate $i$ from genetic mix $m$ as seen by "observer"/macro $o$ depends on its connectivity level and on random effects of mix and macro. We use $\mathrm{Normal}(0,1)$ priors for fixed effects and $\mathrm{Half-Normal}(0,1)$ for all $\sigma$ (random effects and residuals).
 
 ```{r model-cv}
 if (file.exists(here("R_output", "model_suppl_CV.Rdata"))){
