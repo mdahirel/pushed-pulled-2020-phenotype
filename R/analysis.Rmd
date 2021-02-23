@@ -1,6 +1,6 @@
 ---
 title: "Code for: \"Landscape connectivity alters the evolution of density-dependent dispersal during pushed range expansions\" "
-author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Ludovic Mailleret, Anaël Marchand, Elodie Vercken (this code by M. Dahirel)"
+author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Eric Lombaert, Ludovic Mailleret, Anaël Marchand, Elodie Vercken (this code by M. Dahirel)"
 date:
 output: 
   html_document:
@@ -11,13 +11,12 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-!!! think about updating title and author list - 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
-library(arm)
+```{r packages}
+library(arm) # for the out of the box logit() functions
 library(tidyverse)
 
 library(cmdstanr) 
@@ -36,12 +35,28 @@ library(patchwork)
 library(here)
 ```
 
-# Context
+# Introduction
 
+## Aims of project 
 
-#load data
+To understand how connectivity (previously shown to influence the position of a range expansion on a pushed/pulled gradient) influences phenotypic evolution during experimental range expansion in *Trichogramma brassicae* wasps
 
-```{r}
+## General methods (see preprint or article for full details)
+
+24 experimental linear landscapes were created, consisting in patches/vials connected by tubes. Half the landscapes were low connectivity, the other half reference connectivity. 
+
+*Trichogramma brassicae* individuals were introduced in the initial patch, and the expansion experiment ran for 14 generations, counting the starting and final individuals. There were three independent source populations/strains/genetic mixes; each was used to start 8 landscapes.
+
+Towards the end of the experiments, individuals at the core and edge of several of these expansions were sampled, and either measured (size data) or placed in a common garden setting for further experiments (movement, fecundity and dispersal data). They were also compared to individuals from the original stock/source populations. Experiments on dispersal and fecundity were done twice, once on the F1 with no density-dependence, once on the F2 with individuals split in low-density and high-density development contexts.
+
+# Analysis
+
+## Loading datasets
+
+(the number *X* in the "expX_trait.csv" refers to the generation of the experiment. 1: directly taken from the expanding landscapes; 2: one generation of common garden; 3: two generation of common garden)
+
+```{r load-datasets}
+
 raw_size <- read_csv(here("data","exp1_bodysize.csv"))
 
 raw_mvt <- read_csv(here("data","exp2_movement.csv"))
@@ -53,18 +68,48 @@ raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
 raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
 ```
 
-data were collected at some intermediate times in some experiments. For this paper, we only use experiment endpoints
+All 6 datasets share the following columns:
 
-# Body size
+- `Generation`: the generation *from the expanding landscapes* the individuals are sourced from (0 if individuals come from the stock)
 
-ID group is the landscape ID (so Mix * Treatment * Replicate); = Mix "stock" if stock
-we recode Treatment and Location levels
-then IDpop is the population replicate, = ID group for stock, = IDgroup*Location (edge-core) for others
-then IDindividual for which individual is measured
-then creation of a context variable (basically treatment*location)
-then pivoting to long format, so one row = one obs instead of one individual
+- `Mix`: the name of the source strain
 
-```{r}
+- `Treatment`: the connectivity level of the source landscape ("stock" if individuals come from the stock)
+
+- `Location`: "stock", "core" or "front" (edge)
+
+- `Replicate`: a replicate landscape ID. Only designate a unique landscape when combine with `Mix` and `Treatment`
+
+Columns specific to one dataset are detailed in the relevant paragraph below.
+
+## Body size
+
+The `raw_size` dataset contains the additional columns:
+
+- `Patch`: which patch was sampled, expressed as distance from the release patch
+
+- `ID_in_batch`: individual ID within a batch of pictures (a batch containing pictures from the same `Mix`, `Treatment`,`Location`, `Replicate`, so all these columns are needed to get an actual individual-level unique ID)
+
+- `imageID`: name of the source photograph
+
+- `tibia_obsC` and `tibia_obsA`: tibia lengths (in micrometers) as measures by observers "C" (co-author CD) and "A" (co-author AM), respectively. The correlation between the two is good (>0.9) but not perfect (see below). So we'll use a hierarchical approach to account for observer error.
+
+```{r size-observer-correl}
+cor.test(raw_size$tibia_obsA,raw_size$tibia_obsC)
+```
+
+
+Before we can use this dataset for modelling, we need the following steps:
+
+- obtain actually unique IDs for replicate landscape (`IDgroup`), populations (`IDpop`) and individuals (`IDindiv`). Stock populations count as their own replicate landscape and population
+
+- recoding Treatment and Location levels with more accurate names for plotting
+
+- combine `Treatment` and `Location` in a common `context` variable for modelling
+
+- pivoting size data to a long format, so one row = one observation instead of one row = one individual with obs by different observers on different columns: 
+
+```{r size-data-cleaning}
 data_size<-raw_size %>%
                 mutate(IDgroup=ifelse(Generation==0,
                                       paste("Mix",Mix,"_stock",sep=""),
@@ -87,19 +132,16 @@ data_size<-raw_size %>%
 
 ```
 
+We can now fit our model (note the use of nested hierarchical groups to reflect phylogenetic relationships among subgroups): 
 
-use of nested hieracrhic groups to reflect phylogenetic relationships among pop taken from 
-
-```{r}
-if (file.exists(here("R_output", "model_size.Rdata")))
-# this if-else statement is avoid re-fitting a model when knitting Rmd file if there is already one existing in R_output
+```{r model-size}
+if (file.exists(here("R_output", "model_size.Rdata"))){
+# this if-else statement is avoid re-fitting a model if there is already one existing in R_output
 # to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
-  {
     load(here("R_output", "model_size.Rdata"))
   } else {
 
-
-mod_size=brm(bf(scale(tibia)~context+(1|Mix/IDgroup/IDpop)+(1|IDindiv)),
+mod_size <- brm(bf(scale(tibia)~context+(1|Mix/IDgroup/IDpop)+(1|IDindiv)),
         data=data_size,
         chains=4,iter=4000,
         prior=c(set_prior("normal(0,1)",class="Intercept"),
@@ -113,31 +155,23 @@ mod_size=brm(bf(scale(tibia)~context+(1|Mix/IDgroup/IDpop)+(1|IDindiv)),
 }
 ```
 
+We can check that the model is adequate for the data in many ways (see the help and functions in `bayesplot`). Let's look at whether the model predicts well individual points. Because the model includes individual-level effects, we should expect it to be *very* good at its job unless between-observer error is very weird and/or large:
 
-```{r}
-preds_size <- data_size %>% 
-  select(context,Location,Treatment) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
-  unique() %>% 
-  add_fitted_draws(mod_size,re_formula = NA) %>% 
-  ungroup() %>% 
-  mutate(.value=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
-  select(.draw,.value,Treatment,Location,context)
-
-ggplot(preds_size) +
-  geom_jitter(data=data_size %>% 
-                group_by(Location,Treatment,IDindiv) %>% 
-                summarise(tibia=mean(tibia)),aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
-  stat_eye(aes(x=Location,y=.value),.width=c(0.01,0.95), slab_alpha=0.7)+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Mean tibia length (μm)")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  theme_bw()
-
+```{r summary-model}
+###prediction intervals around each point
+ppc_ribbon(yrep=(predict(mod_size,summary=FALSE)),
+           x=rank(predict(mod_size)[,1]),
+           y=scale(data_size$tibia)[,1],
+           prob = 0.5, prob_outer=0.95)
 ```
 
+We can move on to the next data (plots will be drawn later).
 
-# Activity
+## Short-term movement
+
+The `raw_mvt` dataset contains the additional columns:
+
+- `File`: name of the source file
 
 ```{r}
 data_mvt<-raw_mvt %>% 
@@ -553,6 +587,39 @@ ppc_ribbon(yrep=(predict(mod_disp_dens,summary=FALSE)),
            prob = 0.5, prob_outer=0.95)
 ```
 
+
+# Figures
+
+## Body size
+
+```{r figure1}
+preds_size <- data_size %>% 
+  select(context,Location,Treatment) %>% 
+  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
+  unique() %>% 
+  add_fitted_draws(mod_size,re_formula = NA) %>% 
+  ungroup() %>% 
+  mutate(.value=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
+  select(.draw,.value,Treatment,Location,context)
+
+
+ggplot(preds_size) +
+  geom_jitter(data=data_size %>% 
+                group_by(Location,Treatment,IDindiv) %>% 
+                summarise(tibia=mean(tibia)),aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
+  stat_eye(aes(x=Location,y=.value),.width=c(0.01,0.95), slab_alpha=0.7)+
+  scale_x_discrete("Experimental context")+
+  scale_y_continuous("Mean tibia length (μm)")+
+  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  theme_bw()
+```
+
+
+## Short-term movement
+
+## Fecundity
+
+## Dispersal
 
 ```{r}
 
