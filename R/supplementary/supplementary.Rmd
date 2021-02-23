@@ -162,7 +162,7 @@ template %>%
 ## Short-term activity
 
 ```{r pairwise-activity}
-load(here("R_output", "model_mvt.Rdata"))
+load(here("R_output", "models_mvt.Rdata"))
 
 template %>% 
   filter(Density=="low") %>%

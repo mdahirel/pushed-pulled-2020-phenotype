@@ -54,7 +54,7 @@ Towards the end of the experiments, individuals at the core and edge of several 
 
 ## Loading datasets
 
-(the number *X* in the "expX_trait.csv" refers to the generation of the experiment. 1: directly taken from the expanding landscapes; 2: one generation of common garden; 3: two generation of common garden)
+(the number *X* in the "expX_trait.csv" refers to the generation of the experiment. 1: directly taken from the expanding landscapes; 2: one generation of common garden; 3: two generations of common garden)
 
 ```{r load-datasets}
 
@@ -171,7 +171,7 @@ ppc_ribbon(yrep=(predict(mod_size,summary=FALSE)), ## the blue bands represent t
            prob = 0.5, prob_outer=0.95)
 ```
 
-We can move on to the next data (plots will be drawn later).
+We can move on to the next data (the actual plots for the article will be drawn later).
 
 ## Short-term movement
 
@@ -239,7 +239,7 @@ data_mvt<-raw_mvt %>%
 We can now do the models:
 
 ```{r models-mvt}
-if (file.exists(here("R_output", "model_mvt.Rdata")))  {
+if (file.exists(here("R_output", "models_mvt.Rdata")))  {
     load(here("R_output", "models_mvt.Rdata"))
   } else {
     
@@ -304,7 +304,7 @@ ppc_ribbon(yrep=(predict(mod_sinuosity,summary=FALSE)),
            prob = 0.5, prob_outer=0.95)
 ```
 
-Looking at these quick-and-dirty summaries, it is fairly easy to see that all three models all perform reasonably well and all come to the same conclusion: no clear differences between contexts. So we only focus on the "activity" model, for simplicity, in the main text.
+Looking at these quick-and-dirty summaries, it is fairly easy to see that all three models all perform reasonably well and all come to the same conclusion: no clear differences between contexts. So we only focus on the "activity" model, for simplicity, in the main text of the article.
 
 
 ## Fecundity
@@ -622,7 +622,7 @@ loo_compare(loo(mod_disp_alt),loo(mod_disp))
 loo_compare(loo(mod_disp_dens_alt),loo(mod_disp_dens))
 ```
 
-We'd probably need to use cross-validation instead given the number of "problematic" observations based on `pareto_k`, but model comparison suggest that adding `Neggs_total` as covariate improve the models. In any case, it is easy to see that our main interpretations are unchanged by the choice of model, for instance by changing the source model in the plots below. So let's go to plotting now.
+We do need to use cross-validation instead given the number of "problematic" observations based on `pareto_k`, but model comparison suggest that adding `Neggs_total` as covariate improve the models. In any case, it is easy to see that our main interpretations are unchanged by the choice of model, for instance by changing the source model in the plots below. So let's go to plotting now.
 
 # Figures and useful quantities
 
