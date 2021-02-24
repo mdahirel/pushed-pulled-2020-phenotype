@@ -11,6 +11,7 @@ output:
 editor_options: 
   chunk_output_type: console
 bibliography: references.bib
+csl: journal-of-animal-ecology.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -65,7 +66,7 @@ Priors for fixed and random effects are as in **S.1.1**, except for the intercep
 
 ## Fecundity models
 
-The total number of hosts successfully parasitised by a wasp in 24h $F$ is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
+The total number of hosts successfully parasitised by a wasp in 24h, $F$, is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
 
 $$
 \begin{equation}
@@ -74,7 +75,7 @@ F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j,k},\lambda_{m,i,j,k},\phi)
 \mathrm{logit}(p_{m,i,j,k}) = \beta_{0[p]} + \sum_{n=1}^{N} \beta_{n[p]} \times x_{n[m,i,j,k]} + \eta_{m} + \nu_{i} + \theta_{j}. \\
 \alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
 \gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
-\zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
+\zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}), \\
 \eta_{m} \sim \mathrm{Normal}(0,\sigma_{\eta}), \\
 \nu_{i} \sim \mathrm{Normal}(0,\sigma_{\nu}), \\
 \theta_{j} \sim \mathrm{Normal}(0,\sigma_{\theta}). \\
@@ -86,7 +87,7 @@ Finally, we set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the shape 
 
 ## Effective dispersal models
 
-Our measure of effective dispersal is the proportion of offspring $f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analysed using binomial models:
+Our measure of effective dispersal is the proportion of offspring $p_{m,i,j,k} = f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analysed using binomial models:
 
 $$
 \begin{equation}
@@ -157,7 +158,7 @@ template %>%
   theme_bw()
 ```
 
-**Figure S.2.1** - Pairwise between-context differences in predicted wasp size (tibia length). Black dots and segments are posterior means and 95% credible intervals; differences are given in SD units (1SD = `r round(summary_size$sd,1)` μm).
+**Figure S.2.1** - Posterior distributions of the pairwise between-context differences in predicted wasp size (tibia length). Black dots and segments are posterior means and 95% credible intervals; differences are given in SD units (1SD = `r round(summary_size$sd,1)` μm).
 
 ## Short-term activity
 
@@ -178,7 +179,7 @@ template %>%
   theme_bw()
 ```
 
-**Figure S.2.2** - Pairwise between-context differences in predicted probability of activity. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
+**Figure S.2.2** - Posterior distributions of the pairwise between-context differences in predicted probability of activity. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
 
 ## Fecundity
 
@@ -200,7 +201,7 @@ template %>%
   theme_bw()
 ```
 
-**Figure S.2.3** - Pairwise between-context differences in predicted reproductive success in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale.
+**Figure S.2.3** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale.
 
 ```{r pairwise-fecundity2}
 load(here("R_output", "model_fecundity2.Rdata"))
@@ -223,7 +224,7 @@ template %>%
   facet_wrap(~Density)
 ```
 
-**Figure S.2.4** - Pairwise between-context differences in predicted reproductive success in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 4C**.
+**Figure S.2.4** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 4C**.
 
 ## Effective dispersal
 
@@ -244,7 +245,7 @@ template %>%
   theme_bw()
 ```
 
-**Figure S.2.5** - Pairwise between-context differences in effective dispersal in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
+**Figure S.2.5** - Posterior distributions of the pairwise between-context differences in effective dispersal in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
 
 ```{r pairwise-dispersal2}
 load(here("R_output", "model_dispersal2.Rdata"))
@@ -267,13 +268,13 @@ template %>%
   facet_wrap(~Density)
 ```
 
-**Figure S.2.6** - Pairwise between-context differences in effective dispersal in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 5C**.
+**Figure S.2.6** - Posterior distributions of the pairwise between-context differences in effective dispersal in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 5C**.
 
 # S.3 - Effect of experimental connectivity level on demographic variability
 
 In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways.  
 To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals).  
-We do have access to population size estimates for this experiment. These data are re-used from Dahirel et al. [-@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population size were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
+We do have access to population size estimates for this experiment. These data are re-used from Dahirel et al. [-@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population sizes were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
 
 ```{r data-processing-cv}
 
@@ -304,7 +305,7 @@ We analyse coefficients of variation using a lognormal mixed model:
 $$
 \begin{equation}
 \mathrm{CV}_{m,i,o} \sim \mathrm{LogNormal}(\mu_{m,i,o}, \sigma_{d}), \\
-\mu_{m,i,o} = \beta_{0} + \beta_1 \times \mathrm{TREATMENT}_{[i]} + \alpha_{m} + \gamma_{o}, \\
+\mu_{m,i,o} = \beta_{0} + \beta_1 \times \mathrm{TREATMENT}_{[m,i]} + \alpha_{m} + \gamma_{o}, \\
 \alpha_{m} \sim \mathrm{Normal}(0, \sigma_{\alpha}), \\
 \gamma_{o} \sim \mathrm{Normal}(0, \sigma_{\gamma}), \\
 \end{equation}
