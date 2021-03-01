@@ -16,24 +16,24 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r packages}
-library(arm)        # CRAN v1.11-2  # for the out of the box logit() functions
-library(tidyverse)  # CRAN v1.3.0
+library(arm) # CRAN v1.11-2  # for the out of the box logit() functions
+library(tidyverse) # CRAN v1.3.0
 
-library(cmdstanr)   # version 0.3.0, using cmdstan version 2.26.1
-#library(rstan) 
-#rstan can be used as alternate backend; just don't forget to change the backend argument in each model
-library(brms)       # CRAN v2.14.4
+library(cmdstanr) # version 0.3.0, using cmdstan version 2.26.1
+# library(rstan)
+# rstan can be used as alternate backend; just don't forget to change the backend argument in each model
+library(brms) # CRAN v2.14.4
 options(mc.cores = 4) # for the number of chains running in parallel (reduce if needed, models will just take longer to run)
 
-library(bayesplot)  # CRAN v1.8.0
+library(bayesplot) # CRAN v1.8.0
 
-library(tidybayes)  # CRAN v2.3.1
+library(tidybayes) # CRAN v2.3.1
 
-library(ggnewscale) # CRAN v0.4.5 
+library(ggnewscale) # CRAN v0.4.5
 # ggnewscale used in plot so that prediction points and observed points can use different scales for the same aesthetic of the same plot
-library(patchwork)  # [github::thomasp85/patchwork] v1.1.0.9000
+library(patchwork) # [github::thomasp85/patchwork] v1.1.0.9000
 
-library(here)       # CRAN v1.0.1
+library(here) # CRAN v1.0.1
 ```
 
 # Introduction
@@ -46,7 +46,7 @@ To understand how connectivity (previously shown to influence the position of a 
 
 24 experimental linear landscapes were created, consisting in patches/vials connected by tubes. Half the landscapes were low connectivity, the other half reference connectivity. 
 
-*Trichogramma brassicae* individuals were introduced in the initial patch, and the expansion experiment ran for 14 generations, counting the starting and final individuals. There were three independent source populations/strains/genetic mixes; each was used to start 8 landscapes.
+*Trichogramma brassicae* individuals were introduced in the initial patch, and the expansion experiment ran for 14 generations, counting the starting and final individuals. There were three independent source populations (aka strains/genetic mixes); each was used to start 8 landscapes.
 
 Towards the end of the experiments, individuals at the core and edge of several of these expansions were sampled, and either measured (size data) or placed in a common garden setting for further experiments (movement, fecundity and dispersal data). They were also compared to individuals from the original stock/source populations. Experiments on dispersal and fecundity were done twice, once on the F1 with no density-dependence, once on the F2 with individuals split in low-density and high-density development contexts.
 
@@ -54,19 +54,19 @@ Towards the end of the experiments, individuals at the core and edge of several 
 
 ## Loading datasets
 
-(the number *X* in the "expX_trait.csv" refers to the generation of the experiment. 1: directly taken from the expanding landscapes; 2: one generation of common garden; 3: two generations of common garden)
+(the number *X* in the "expX_trait.csv" refers to the source of the experiment wasps. 1: directly taken from the expanding landscapes; 2: one generation of common garden; 3: two generations of common garden)
 
 ```{r load-datasets}
 
-raw_size <- read_csv(here("data","exp1_bodysize.csv"))
+raw_size <- read_csv(here("data", "exp1_bodysize.csv"))
 
-raw_mvt <- read_csv(here("data","exp2_movement.csv"))
+raw_mvt <- read_csv(here("data", "exp2_movement.csv"))
 
-raw_fec <- read_csv(here("data","exp2_fecundity.csv"))
-raw_disp <- read_csv(here("data","exp2_dispersal.csv"))
+raw_fec <- read_csv(here("data", "exp2_fecundity.csv"))
+raw_disp <- read_csv(here("data", "exp2_dispersal.csv"))
 
-raw_fec_dens <- read_csv(here("data","exp3_fecundity.csv"))
-raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
+raw_fec_dens <- read_csv(here("data", "exp3_fecundity.csv"))
+raw_disp_dens <- read_csv(here("data", "exp3_dispersal.csv"))
 ```
 
 All 6 datasets share the following columns:
@@ -79,9 +79,9 @@ All 6 datasets share the following columns:
 
 - `Location`: "stock", "core" or "front" (edge)
 
-- `Replicate`: a replicate landscape ID. Only designate a unique landscape when combine with `Mix` and `Treatment`
+- `Replicate`: a replicate landscape ID. Only designates a unique landscape when combined with `Mix` and `Treatment`
 
-Columns specific to one dataset are detailed in the relevant paragraph below.
+Columns specific to one dataset are detailed in the relevant paragraphs below.
 
 ## Body size
 
@@ -96,81 +96,89 @@ The `raw_size` dataset contains the additional columns:
 - `tibia_obsC` and `tibia_obsA`: tibia lengths (in micrometers) as measures by observers "C" (co-author CD) and "A" (co-author AM), respectively. The correlation between the two is good (>0.9) but not perfect (see below). So we'll use a hierarchical approach to account for observer error.
 
 ```{r size-observer-correl}
-cor.test(raw_size$tibia_obsA,raw_size$tibia_obsC)
+cor.test(raw_size$tibia_obsA, raw_size$tibia_obsC)
 ```
 
 
-Before we can use this dataset for modelling, we need the following steps:
+Before we can use this dataset for modeling, we need the following steps:
 
 - obtain actually unique IDs for replicate landscape (`IDgroup`), populations (`IDpop`) and individuals (`IDindiv`). Stock populations count as their own replicate landscape and population
 
-- recoding Treatment and Location levels with more accurate names for plotting
+- recode Treatment and Location levels with more accurate names for plotting
 
 - combine `Treatment` and `Location` in a common `context` variable for modelling, that we then reorder so that the model intercept is the "stock" context
 
 - pivoting size data to a long format, so one row = one observation instead of one row = one individual with obs by different observers on different columns: 
 
 ```{r size-data-cleaning}
-data_size<-raw_size %>%
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>% 
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(IDindiv=paste(IDpop,ID_in_batch,sep="_")) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>%
-                pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
-  filter(is.na(tibia)==FALSE)
-
+data_size <- raw_size %>%
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_GenerationFinal", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(IDindiv = paste(IDpop, ID_in_batch, sep = "_")) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  pivot_longer(
+    cols = c("tibia_obsA", "tibia_obsC"),
+    names_to = "observer", values_to = "tibia"
+  ) %>%
+  filter(is.na(tibia) == FALSE)
 ```
 
 ```{r size-accounting}
 ## some accounting details for the Methods
-data_size %>% 
-  filter(observer=="tibia_obsA") %>% 
-  group_by(Mix) %>% count()
+data_size %>%
+  filter(observer == "tibia_obsA") %>%
+  group_by(Mix) %>%
+  count()
 
 length(unique(data_size$IDpop))
 
-data_size %>% 
-  filter(observer=="tibia_obsA") %>% 
-  group_by(IDpop) %>% count() %>% ungroup() %>% summarise(mean=mean(n),sd=sd(n))
+data_size %>%
+  filter(observer == "tibia_obsA") %>%
+  group_by(IDpop) %>%
+  count() %>%
+  ungroup() %>%
+  summarise(mean = mean(n), sd = sd(n))
 ```
-
 
 We can now fit our model (note the use of nested hierarchical groups to reflect phylogenetic relationships among subgroups): 
 
 ```{r model-size}
-if (file.exists(here("R_output", "model_size.Rdata"))){
-# this if-else statement is avoid re-fitting a model if there is already one existing in R_output
-# to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
-    load(here("R_output", "model_size.Rdata"))
-  } else {
-
-mod_size <- brm(bf(scale(tibia)~context+(1|Mix/IDgroup/IDpop)+(1|IDindiv)),
-        data=data_size,
-        chains=4,iter=4000,warmup=2000,
-        prior=c(set_prior("normal(0,1)",class="Intercept"),
-                set_prior("normal(0,1)",class="b"),
-                set_prior("normal(0,1)",class="sigma"),
-                set_prior("normal(0,1)",class="sd")),
-        seed=42,control=list(adapt_delta=0.99,max_treedepth=15), backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_size.Rdata"))) {
+  # this if-else statement is avoid re-fitting a model if there is already one existing in R_output
+  # to override, re-run the model and re-save manually by selecting relevant code lines then knit (or delete the Rdata object)
+  load(here("R_output", "model_size.Rdata"))
+} else {
+  mod_size <- brm(bf(scale(tibia) ~ context + (1 | Mix / IDgroup / IDpop) + (1 | IDindiv)),
+    data = data_size,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sigma"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99, max_treedepth = 15),
+    backend = "cmdstanr"
+  )
 
   save(list = "mod_size", file = here("R_output", "model_size.Rdata"))
 }
 ```
 
-We can check that the model is adequate for the data in many ways (see the help and functions in `bayesplot`). Let's look at whether the model predicts well individual points. Because the model includes individual-level effects, we should expect it to be *very* good at its job unless between-observer error is very weird and/or large:
+We can check that the model is adequate for the data in many ways (see the help and functions in `bayesplot`). Let's look for instance at whether the model predicts well individual points with `ppc_ribbon()`. Because the model includes individual-level effects, we should expect it to be *very* good at its job unless between-observer error is very weird and/or large:
 
 ```{r model-size-summary}
 
@@ -178,18 +186,20 @@ summary(mod_size)
 
 plot(conditional_effects(mod_size))
 
-###prediction intervals around each point
-ppc_ribbon(yrep=(predict(mod_size,summary=FALSE)), ## the blue bands represent the posterior predictions, the black line the obs
-           x=rank(predict(mod_size)[,1]),
-           y=scale(data_size$tibia)[,1],
-           prob = 0.5, prob_outer=0.95)
+### prediction intervals around each point
+ppc_ribbon(
+  yrep = (predict(mod_size, summary = FALSE)), ## the blue bands represent the posterior predictions, the black line the obs
+  x = rank(predict(mod_size)[, 1]),
+  y = scale(data_size$tibia)[, 1],
+  prob = 0.5, prob_outer = 0.95
+)
 ```
 
 We can move on to the next data (the actual plots for the article will be drawn later).
 
 ## Short-term movement
 
-The `raw_mvt` dataset is organised so that one row = one tracklet (i.e. a >2 sec continuous observation of an individual until its identity is lost or it moves out of the filmed area). Because we can't assignate tracklets to a specific individual, we will compile these at the testing group level later. But before that, some info on this dataset specific columns:
+The `raw_mvt` dataset is organised so that one row = one tracklet (i.e. a >= 2 sec continuous observation of an individual until its identity is lost or it moves out of the filmed area). Because we can't assignate tracklets to a specific individual, we will compile these at the testing group level for analysis. But before that, some info on this dataset specific columns:
 
 - `File`: name of the source file
 
@@ -221,40 +231,45 @@ So, before we proceed with models, we need to
 
 
 ```{r mvt-data-cleaning}
-data_mvt<-raw_mvt %>% 
-                filter(Generation %in% c(0,10)) %>% 
-                filter(timestamp<=300) %>% ##some tests are filmed slightly longer than the nominal 5 minutes, this removes their ends to standardize
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_Generation10",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>% 
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(IDtest=paste(IDpop,testing_unit,sep="_")) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>%
-                group_by(Mix,Treatment,Generation,Replicate,Location,IDgroup,IDpop,IDtest,context) %>% 
-                summarise(obs_time=sum(path_duration),
-                          percentData=mean(percentData), ##this column is already a testing_unit- level variable
-                          mean_activity=weighted.mean(activity_percent,path_duration,na.rm=TRUE),
-                          mean_speed=weighted.mean(path_length/path_duration,path_duration,na.rm=TRUE),
-                          mean_sinuosity=weighted.mean(sinuosity,path_duration,na.rm=TRUE)
-                          ) %>% 
+data_mvt <- raw_mvt %>%
+  filter(Generation %in% c(0, 10)) %>%
+  filter(timestamp <= 300) %>% ## some tests are filmed slightly longer than the nominal 5 minutes, this removes their ends to standardize
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_Generation10", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(IDtest = paste(IDpop, testing_unit, sep = "_")) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  group_by(
+    Mix, Treatment, Generation, Replicate, Location,
+    IDgroup, IDpop, IDtest, context
+  ) %>%
+  summarise(
+    obs_time = sum(path_duration),
+    percentData = mean(percentData), ## this column is already a testing_unit- level variable
+    mean_activity = weighted.mean(activity_percent, path_duration, na.rm = TRUE),
+    mean_speed = weighted.mean(path_length / path_duration, path_duration, na.rm = TRUE),
+    mean_sinuosity = weighted.mean(sinuosity, path_duration, na.rm = TRUE)
+  ) %>%
   ungroup()
 ```
 
 ```{r mvt-data-accounting}
-
+### some summary info for manuscript
 dim(data_mvt)
-data_mvt %>% 
-  group_by(Mix,Location) %>% 
+data_mvt %>%
+  group_by(Mix, Location) %>%
   count()
 
 unique(data_mvt$IDgroup)
@@ -263,43 +278,56 @@ unique(data_mvt$IDgroup)
 We can now do the models:
 
 ```{r models-mvt}
-if (file.exists(here("R_output", "models_mvt.Rdata")))  {
-    load(here("R_output", "models_mvt.Rdata"))
-  } else {
-    
-mod_activity <- brm(bf(mean_activity~context+(1|Mix/IDgroup/IDpop),
-               nlf(phi~1/invphi),
-               invphi~1),
-        data=data_mvt,family=Beta,
-        chains=4,iter=8000,warmup=4000,
-        prior=c(set_prior("normal(0,1.5)",class="Intercept"),
-                set_prior("normal(0,1)",class="b"),
-                set_prior("normal(0,1)",class="sd"),
-                set_prior("normal(0,1)",nlpar="invphi",lb=0)),
-        seed=42,control=list(adapt_delta=0.99,max_treedepth=15),backend="cmdstanr"
-)
+if (file.exists(here("R_output", "models_mvt.Rdata"))) {
+  load(here("R_output", "models_mvt.Rdata"))
+} else {
+  mod_activity <- brm(bf(
+    mean_activity ~ context + (1 | Mix / IDgroup / IDpop),
+    nlf(phi ~ 1 / invphi),
+    invphi ~ 1
+  ),
+  data = data_mvt, family = Beta,
+  chains = 4, iter = 8000, warmup = 4000,
+  prior = c(
+    set_prior("normal(0,1.5)", class = "Intercept"),
+    set_prior("normal(0,1)", class = "b"),
+    set_prior("normal(0,1)", class = "sd"),
+    set_prior("normal(0,1)", nlpar = "invphi", lb = 0)
+  ),
+  seed = 42, control = list(adapt_delta = 0.99, max_treedepth = 15),
+  backend = "cmdstanr"
+  )
 
-mod_speed <- brm(bf(scale(mean_speed)~context+(1|Mix/IDgroup/IDpop)),
-        data=data_mvt,
-        chains=4,iter=4000,warmup=2000,
-        prior=c(set_prior("normal(0,1)",class="Intercept"),
-                set_prior("normal(0,1)",class="b"),
-                set_prior("normal(0,1)",class="sd")),
-        seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
-)
+  mod_speed <- brm(bf(scale(mean_speed) ~ context + (1 | Mix / IDgroup / IDpop)),
+    data = data_mvt,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99),
+    backend = "cmdstanr"
+  )
 
-mod_sinuosity <- brm(bf(scale(mean_sinuosity)~context+(1|Mix/IDgroup/IDpop)),
-        data=data_mvt,
-        chains=4,iter=4000,warmup=2000,
-        prior=c(set_prior("normal(0,1)",class="Intercept"),
-                set_prior("normal(0,1)",class="b"),
-                set_prior("normal(0,1)",class="sd")),
-        seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
-)
+  mod_sinuosity <- brm(bf(scale(mean_sinuosity) ~ context + (1 | Mix / IDgroup / IDpop)),
+    data = data_mvt,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99),
+    backend = "cmdstanr"
+  )
 
 
-  save(list = c("mod_activity","mod_speed","mod_sinuosity"), file = here("R_output", "models_mvt.Rdata"))
-  }
+  save(
+    list = c("mod_activity", "mod_speed", "mod_sinuosity"),
+    file = here("R_output", "models_mvt.Rdata")
+  )
+}
 ```
 
 ```{r models-mvt-summary}
@@ -311,31 +339,37 @@ plot(conditional_effects(mod_activity))
 plot(conditional_effects(mod_speed))
 plot(conditional_effects(mod_sinuosity))
 
-###prediction intervals around each point
-ppc_ribbon(yrep=(predict(mod_activity,summary=FALSE)),
-           x=rank(predict(mod_activity)[,1]),
-           y=data_mvt$mean_activity,
-           prob = 0.5, prob_outer=0.95)
+### prediction intervals around each point
+ppc_ribbon(
+  yrep = (predict(mod_activity, summary = FALSE)),
+  x = rank(predict(mod_activity)[, 1]),
+  y = data_mvt$mean_activity,
+  prob = 0.5, prob_outer = 0.95
+)
 
-ppc_ribbon(yrep=(predict(mod_speed,summary=FALSE)),
-           x=rank(predict(mod_speed)[,1]),
-           y=scale(data_mvt$mean_speed)[,1],
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_speed, summary = FALSE)),
+  x = rank(predict(mod_speed)[, 1]),
+  y = scale(data_mvt$mean_speed)[, 1],
+  prob = 0.5, prob_outer = 0.95
+)
 
-ppc_ribbon(yrep=(predict(mod_sinuosity,summary=FALSE)),
-           x=rank(predict(mod_sinuosity)[,1]),
-           y=scale(data_mvt$mean_sinuosity)[,1],
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_sinuosity, summary = FALSE)),
+  x = rank(predict(mod_sinuosity)[, 1]),
+  y = scale(data_mvt$mean_sinuosity)[, 1],
+  prob = 0.5, prob_outer = 0.95
+)
 ```
 
-Looking at these quick-and-dirty summaries, it is fairly easy to see that all three models all perform reasonably well and all come to the same conclusion: no clear differences between contexts. So we only focus on the "activity" model, for simplicity, in the main text of the article.
+Looking at these quick-and-dirty summaries, it is fairly easy to see that all three models all perform reasonably well and all come to the same conclusion: no clear differences between contexts (feel free to explore the model objects and their predictions in more detail to check this interpretation). So we only focus on the "activity" model, for simplicity, in the main text of the article.
 
 
 ## Fecundity
 
 In the two fecundity data tables, we work with one row = the fecundity of one female individual. In addition to the usual shared data columns, these tables contain only 3 new columns:
 
-- `Bloc`: the testing block. A legacy column from the original, pre-common garden, expansion landscapes. Can be ignored (especially given `stock` are their own block, and that would make it extremely problematic to include it)
+- `Bloc`: the testing block during the expansions. A legacy column from the original, pre-common garden, expansion landscapes. Can be ignored (especially given `stock` are their own block, and that would make it extremely problematic to include it)
 
 - `Fecundity`: the number of hosts successfully parasitized by the focal female
 
@@ -343,7 +377,7 @@ In the two fecundity data tables, we work with one row = the fecundity of one fe
 
 We can go on with the process of reshaping the data tables:
 
-- only keep the first and last generation of testing (in the denity-independent experiment, some intermediate tests were also carried on, but we don't use them)
+- only keep the first and last generation of testing (in the density-independent experiment, some intermediate tests were also carried on, but we don't use them)
 
 - again obtain actually unique IDs for replicate landscape (`IDgroup`) and populations (`IDpop`)
 
@@ -355,138 +389,154 @@ We can go on with the process of reshaping the data tables:
 
 
 ```{r fecundity-data-cleaning1}
-data_fec<-raw_fec %>% 
-                filter(Generation %in% c(0,12)) %>%
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>%
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=fct_recode(context,stock="stock stock"))%>%
-                mutate(context = fct_relevel(context,"stock", after=0)) 
+data_fec <- raw_fec %>%
+  filter(Generation %in% c(0, 12)) %>%
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_GenerationFinal", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0))
 ```
 
 ```{r fecundity-data-cleaning2}
-data_fec_dens<-raw_fec_dens %>% 
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>%
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=fct_recode(context,stock="stock stock"))%>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>% ## just some reordering for plots later
-                mutate(Density=fct_relevel(factor(Density),"high",after=Inf)) %>% ## same
-                mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
+data_fec_dens <- raw_fec_dens %>%
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_GenerationFinal", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>% ## just some reordering for plots later
+  mutate(Density = fct_relevel(factor(Density), "high", after = Inf)) %>% ## same
+  mutate(Density_centred = as.numeric(Density == "high") - mean(as.numeric(Density == "high")))
 ```
 
 ```{r fecundity-data-accounting}
+### some summary info for manuscript
 dim(data_fec)
-data_fec %>% 
-  group_by(IDpop) %>% 
-  count() %>% 
-  ungroup() %>% 
-  summarise(mean=mean(n),sd=sd(n))
+data_fec %>%
+  group_by(IDpop) %>%
+  count() %>%
+  ungroup() %>%
+  summarise(mean = mean(n), sd = sd(n))
 
 unique(data_fec$IDgroup)
 unique(data_fec$IDpop)
 
 dim(data_fec_dens)
-data_fec_dens %>% 
-  group_by(IDpop,Density) %>% 
-  filter(Location!="stock") %>% 
-  count() %>% 
-  ungroup() %>% 
-  summarise(mean=mean(n),sd=sd(n))
+data_fec_dens %>%
+  group_by(IDpop, Density) %>%
+  filter(Location != "stock") %>%
+  count() %>%
+  ungroup() %>%
+  summarise(mean = mean(n), sd = sd(n))
 
 unique(data_fec_dens$IDgroup)
 unique(data_fec_dens$IDpop)
 ```
 
 
-On the choice of models: we started with binomial models (not shown), as fecundity was constrained by the total number of eggs available per female (90). However, a look at posterior predictions revealed (a) an excess of zeroes in data compared to predictions (b) a good degree of overdispersion, too. To solve both problems at once, we thus switched to zero-inflated negative binomial models. the models performed much better, and "impossible" posterior predictions (> 90) are almost totally absent, so removing this constraint was acceptable.
+On the choice of models: we started with binomial models (not shown), as fecundity was constrained by the total number of eggs available per female (90). However, a look at posterior predictions revealed (a) an excess of zeroes in data compared to predictions (b) a good degree of overdispersion, too. To solve both problems at once, we thus switched to zero-inflated negative binomial models. the models performed much better, and "impossible" posterior predictions (> 90) are totally absent, so removing this constraint was acceptable.
 
 We can go on with the selected models:
 
 ```{r model-fecundity1}
-if (file.exists(here("R_output", "model_fecundity1.Rdata"))){
-    load(here("R_output", "model_fecundity1.Rdata"))
-  } else {
-mod_fec <- brm(bf(Fecundity~context+(1|Mix/IDgroup/IDpop),
-            zi~context+(1|Mix/IDgroup/IDpop),
-            nlf(shape~1/invshape),
-               invshape~1),
-         data=data_fec,family=zero_inflated_negbinomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(3.8,0.5)",class="Intercept"), ## see supplementary for rationale
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd"),
-                 set_prior("normal(0,0.2)",class="sd",group="Mix"), ## same; narrower prior for mix to stamp divergences
-                 set_prior("normal(0,1.5)",class="Intercept",dpar="zi"),
-                 set_prior("normal(0,1)",class="b",dpar="zi"),
-                 set_prior("normal(0,1)",class="sd",dpar="zi"),
-                 set_prior("normal(0,0.2)",class="sd",dpar="zi",group="Mix"),
-                set_prior("normal(0,1)",nlpar="invshape",lb=0)),
-         seed=42,control=list(adapt_delta=0.999,max_treedepth=15),backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_fecundity1.Rdata"))) {
+  load(here("R_output", "model_fecundity1.Rdata"))
+} else {
+  mod_fec <- brm(bf(
+    Fecundity ~ context + (1 | Mix / IDgroup / IDpop),
+    zi ~ context + (1 | Mix / IDgroup / IDpop),
+    nlf(shape ~ 1 / invshape),
+    invshape ~ 1
+  ),
+  data = data_fec, family = zero_inflated_negbinomial,
+  chains = 4, iter = 4000, warmup = 2000,
+  prior = c(
+    set_prior("normal(3.8,0.5)", class = "Intercept"), ## see supplementary for rationale
+    set_prior("normal(0,1)", class = "b"),
+    set_prior("normal(0,1)", class = "sd"),
+    set_prior("normal(0,0.2)", class = "sd", group = "Mix"), ## same; narrower prior for mix to stamp divergences
+    set_prior("normal(0,1.5)", class = "Intercept", dpar = "zi"),
+    set_prior("normal(0,1)", class = "b", dpar = "zi"),
+    set_prior("normal(0,1)", class = "sd", dpar = "zi"),
+    set_prior("normal(0,0.2)", class = "sd", dpar = "zi", group = "Mix"),
+    set_prior("normal(0,1)", nlpar = "invshape", lb = 0)
+  ),
+  seed = 42, control = list(adapt_delta = 0.999, max_treedepth = 15),
+  backend = "cmdstanr"
+  )
 
   save(list = "mod_fec", file = here("R_output", "model_fecundity1.Rdata"))
-  }
-
+}
 ```
 
 ```{r model-fecundity2}
-if (file.exists(here("R_output", "model_fecundity2.Rdata"))){
-    load(here("R_output", "model_fecundity2.Rdata"))
-  } else {
-mod_fec_dens <- brm(bf(Fecundity~context*Density_centred+(1|Mix/IDgroup/IDpop),
-            zi~context*Density_centred+(1|Mix/IDgroup/IDpop),
-            nlf(shape~1/invshape),
-               invshape~1),
-         data=data_fec_dens,family=zero_inflated_negbinomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(3.8,0.5)",class="Intercept"),
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd"),
-                 set_prior("normal(0,0.2)",class="sd",group="Mix"), ## narrower prior for mix to stamp divergences
-                 set_prior("normal(0,1.5)",class="Intercept",dpar="zi"),
-                 set_prior("normal(0,1)",class="b",dpar="zi"),
-                 set_prior("normal(0,1)",class="sd",dpar="zi"),
-                 set_prior("normal(0,0.2)",class="sd",dpar="zi",group="Mix"),
-                set_prior("normal(0,1)",nlpar="invshape",lb=0)),
-         seed=42,control=list(adapt_delta=0.999,max_treedepth=20),backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_fecundity2.Rdata"))) {
+  load(here("R_output", "model_fecundity2.Rdata"))
+} else {
+  mod_fec_dens <- brm(bf(
+    Fecundity ~ context * Density_centred + (1 | Mix / IDgroup / IDpop),
+    zi ~ context * Density_centred + (1 | Mix / IDgroup / IDpop),
+    nlf(shape ~ 1 / invshape),
+    invshape ~ 1
+  ),
+  data = data_fec_dens, family = zero_inflated_negbinomial,
+  chains = 4, iter = 4000, warmup = 2000,
+  prior = c(
+    set_prior("normal(3.8,0.5)", class = "Intercept"),
+    set_prior("normal(0,1)", class = "b"),
+    set_prior("normal(0,1)", class = "sd"),
+    set_prior("normal(0,0.2)", class = "sd", group = "Mix"), ## narrower prior for mix to stamp divergences
+    set_prior("normal(0,1.5)", class = "Intercept", dpar = "zi"),
+    set_prior("normal(0,1)", class = "b", dpar = "zi"),
+    set_prior("normal(0,1)", class = "sd", dpar = "zi"),
+    set_prior("normal(0,0.2)", class = "sd", dpar = "zi", group = "Mix"),
+    set_prior("normal(0,1)", nlpar = "invshape", lb = 0)
+  ),
+  seed = 42, control = list(adapt_delta = 0.999, max_treedepth = 20),
+  backend = "cmdstanr"
+  )
   save(list = "mod_fec_dens", file = here("R_output", "model_fecundity2.Rdata"))
 }
 ```
 
 ```{r models-fecundity-ppchecks}
-ppc_ribbon(yrep=(predict(mod_fec,summary=FALSE)),
-           x=rank(predict(mod_fec)[,1]),
-           y=data_fec$Fecundity,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_fec, summary = FALSE)),
+  x = rank(predict(mod_fec)[, 1]),
+  y = data_fec$Fecundity,
+  prob = 0.5, prob_outer = 0.95
+)
 
-ppc_ribbon(yrep=(predict(mod_fec_dens,summary=FALSE)),
-           x=rank(predict(mod_fec_dens)[,1]),
-           y=data_fec_dens$Fecundity,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_fec_dens, summary = FALSE)),
+  x = rank(predict(mod_fec_dens)[, 1]),
+  y = data_fec_dens$Fecundity,
+  prob = 0.5, prob_outer = 0.95
+)
 
-### the zero-inflation makes it a bit hard to see things, but we can see 
+### the zero-inflation makes it a bit hard to see things, but we can see
 ### that the model is good at capturing these excess zeroes (very clear on the second plot)
 ### and never predicts "too high" fecundity
 
@@ -500,7 +550,7 @@ For this latest type of data, one row = one trial made of 50 individuals (includ
 
 Data columns are mostly as in previous datasets (see above). The two truly new columns are:
 
-- `Neggs_start` and `Neggs_arrival`: number of successfully parasitised eggs in the starting patch and the arrival patch, respectively.
+- `Neggs_start` and `Neggs_arrival`: number of successfully parasitized eggs in the starting patch and the arrival patch, respectively.
 
 We can go on with the process of reshaping the data tables:
 
@@ -514,176 +564,196 @@ We can go on with the process of reshaping the data tables:
 
 - we add a "total number of eggs parasitized" variable that correspond to the "total trials" of our binomial distribution (the "successes" would be `Neggs_arrival`)
 
-- we add a scaled version of that variable, who can possibly serve as predictor (see a bit later)
+- we add a scaled version of that variable, which can possibly serve as predictor (see a bit later)
 
 ```{r dispersal-data-cleaning1}
-data_disp<-raw_disp %>% 
-                filter(Generation %in% c(0,12)) %>%
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>%
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=relevel(factor(context),"stock stock")) %>%
-                mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>%
-                mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
-                mutate(Neggs_all_scaled=scale(Neggs_all)[,1])
+data_disp <- raw_disp %>%
+  filter(Generation %in% c(0, 12)) %>%
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_GenerationFinal", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = relevel(factor(context), "stock stock")) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  mutate(Neggs_all = Neggs_start + Neggs_arrival) %>%
+  mutate(Neggs_all_scaled = scale(Neggs_all)[, 1])
 ```
 
 ```{r dispersal-data-cleaning2}
 
-data_disp_dens<-raw_disp_dens %>% 
-                mutate(IDgroup=ifelse(Generation==0,
-                                      paste("Mix",Mix,"_stock",sep=""),
-                                      paste("Mix",Mix,"_",Treatment,"_Rep",Replicate,"_GenerationFinal",sep="")
-                                      )
-                       )%>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>%
-                mutate(IDpop=ifelse(Generation==0,
-                                    IDgroup,
-                                    paste(IDgroup,"_Location",Location,sep=""))) %>% 
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=relevel(factor(context),"stock stock")) %>%
-                mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>%
-                mutate(Neggs_all=Neggs_start+Neggs_arrival) %>% 
-                mutate(Neggs_all_scaled=scale(Neggs_all)[,1]) %>% 
-                mutate(Density=fct_relevel(factor(Density),"high",after=Inf)) %>% 
-                mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
+data_disp_dens <- raw_disp_dens %>%
+  mutate(IDgroup = ifelse(Generation == 0,
+    paste("Mix", Mix, "_stock", sep = ""),
+    paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_GenerationFinal", sep = "")
+  )) %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(IDpop = ifelse(Generation == 0,
+    IDgroup,
+    paste(IDgroup, "_Location", Location, sep = "")
+  )) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = relevel(factor(context), "stock stock")) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  mutate(Neggs_all = Neggs_start + Neggs_arrival) %>%
+  mutate(Neggs_all_scaled = scale(Neggs_all)[, 1]) %>%
+  mutate(Density = fct_relevel(factor(Density), "high", after = Inf)) %>%
+  mutate(Density_centred = as.numeric(Density == "high") - mean(as.numeric(Density == "high")))
 ```
 
 ```{r dispersal-data-accounting}
+### some summary info for manuscript
 dim(data_disp)
 unique(data_disp$IDgroup)
 unique(data_disp$IDpop)
 
 dim(data_disp_dens)
-data_disp_dens %>% 
-  group_by(IDpop,Density) %>% 
-  filter(Location!="stock") %>% 
-  count() %>% 
-  ungroup() %>% 
-  summarise(mean=mean(n),sd=sd(n))
+data_disp_dens %>%
+  group_by(IDpop, Density) %>%
+  filter(Location != "stock") %>%
+  count() %>%
+  ungroup() %>%
+  summarise(mean = mean(n), sd = sd(n))
 
 unique(data_disp_dens$IDgroup)
 unique(data_disp_dens$IDpop)
 ```
+
 Let's fit the models then. Let's start with models based on the now usual covariates:
 
 ```{r model-dispersal-alt1}
-if (file.exists(here("R_output", "model_dispersal1_alt.Rdata"))){
-    load(here("R_output", "model_dispersal1_alt.Rdata"))
-  } else {
-mod_disp_alt=brm(bf(Neggs_arrival|trials(Neggs_all)~context+(1|Mix/IDgroup/IDpop)),
-         data=data_disp,family=binomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99), backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_dispersal1_alt.Rdata"))) {
+  load(here("R_output", "model_dispersal1_alt.Rdata"))
+} else {
+  mod_disp_alt <- brm(bf(Neggs_arrival | trials(Neggs_all) ~ context + (1 | Mix / IDgroup / IDpop)),
+    data = data_disp, family = binomial,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1.5)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99), backend = "cmdstanr"
+  )
   save(list = "mod_disp_alt", file = here("R_output", "model_dispersal1_alt.Rdata"))
 }
 ```
 
 ```{r model-dispersal-alt2}
-if (file.exists(here("R_output", "model_dispersal2_alt.Rdata"))){
-    load(here("R_output", "model_dispersal2_alt.Rdata"))
-  } else {
-mod_disp_dens_alt=brm(bf(Neggs_arrival|trials(Neggs_all)~context*Density_centred+(1|Mix/IDgroup/IDpop)),
-         data=data_disp_dens,family=binomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_dispersal2_alt.Rdata"))) {
+  load(here("R_output", "model_dispersal2_alt.Rdata"))
+} else {
+  mod_disp_dens_alt <- brm(bf(Neggs_arrival | trials(Neggs_all) ~ context * Density_centred + (1 | Mix / IDgroup / IDpop)),
+    data = data_disp_dens, family = binomial,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1.5)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99), backend = "cmdstanr"
+  )
 
   save(list = "mod_disp_dens_alt", file = here("R_output", "model_dispersal2_alt.Rdata"))
 }
 ```
 
 ```{r summary-model-alt}
-ppc_ribbon(yrep=(predict(mod_disp_alt,summary=FALSE)),
-           x=rank(predict(mod_disp_alt)[,1]),
-           y=data_disp$Neggs_arrival,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_disp_alt, summary = FALSE)),
+  x = rank(predict(mod_disp_alt)[, 1]),
+  y = data_disp$Neggs_arrival,
+  prob = 0.5, prob_outer = 0.95
+)
 
-ppc_ribbon(yrep=(predict(mod_disp_dens_alt,summary=FALSE)),
-           x=rank(predict(mod_disp_dens_alt)[,1]),
-           y=data_disp_dens$Neggs_arrival,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_disp_dens_alt, summary = FALSE)),
+  x = rank(predict(mod_disp_dens_alt)[, 1]),
+  y = data_disp_dens$Neggs_arrival,
+  prob = 0.5, prob_outer = 0.95
+)
 ```
 
-The predictions looks mostly good-ish, but there are a bit of over and underpredictions compared to previous models, which may signal some overdispersion (especially in the model with density; try also other `pp_checks`)
+The predictions looks mostly good-ish, but there are a bit of both over and underpredictions compared to previous models, which may signal some overdispersion (especially in the model with density; try also other `pp_checks`)
 
 How do we account for that? 
 
-We have reasons to think that we need to control for the total number of eggs laid. After all, once you more or less filled the starting patch, you can only increase fecundity if you increase dispersal. And also, there may be a dispersal-fecundity syndrome. So let's do this:
+We have reasons to think that we need to control for the total number of eggs laid. After all, once you more or less filled the starting patch, you can only increase fecundity if you increase dispersal, so effective dispersal rate will be correlated with total fecundity. And also, there may be a dispersal-fecundity syndrome. So let's do this:
 
 ```{r model-dispersal1}
-if (file.exists(here("R_output", "model_dispersal1.Rdata"))){
-    load(here("R_output", "model_dispersal1.Rdata"))
-  } else {
-mod_disp <- brm(bf(Neggs_arrival|trials(Neggs_all)~context+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
-         data=data_disp,family=binomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99), backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_dispersal1.Rdata"))) {
+  load(here("R_output", "model_dispersal1.Rdata"))
+} else {
+  mod_disp <- brm(bf(Neggs_arrival | trials(Neggs_all) ~ context + Neggs_all_scaled + (1 | Mix / IDgroup / IDpop)),
+    data = data_disp, family = binomial,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1.5)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99), backend = "cmdstanr"
+  )
   save(list = "mod_disp", file = here("R_output", "model_dispersal1.Rdata"))
 }
 ```
 
 
 ```{r model_dispersal2}
-if (file.exists(here("R_output", "model_dispersal2.Rdata"))){
-    load(here("R_output", "model_dispersal2.Rdata"))
-  } else {
-mod_disp_dens <- brm(bf(Neggs_arrival|trials(Neggs_all)~context*Density_centred+Neggs_all_scaled+(1|Mix/IDgroup/IDpop)),
-         data=data_disp_dens,family=binomial,
-         chains=4,iter=4000,warmup=2000,
-         prior=c(set_prior("normal(0,1.5)",class="Intercept"),
-                 set_prior("normal(0,1)",class="b"),
-                 set_prior("normal(0,1)",class="sd")),
-         seed=42,control=list(adapt_delta=0.99),backend="cmdstanr"
-)
+if (file.exists(here("R_output", "model_dispersal2.Rdata"))) {
+  load(here("R_output", "model_dispersal2.Rdata"))
+} else {
+  mod_disp_dens <- brm(bf(Neggs_arrival | trials(Neggs_all) ~ context * Density_centred + Neggs_all_scaled + (1 | Mix / IDgroup / IDpop)),
+    data = data_disp_dens, family = binomial,
+    chains = 4, iter = 4000, warmup = 2000,
+    prior = c(
+      set_prior("normal(0,1.5)", class = "Intercept"),
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd")
+    ),
+    seed = 42, control = list(adapt_delta = 0.99), backend = "cmdstanr"
+  )
 
   save(list = "mod_disp_dens", file = here("R_output", "model_dispersal2.Rdata"))
 }
 ```
 
 ```{r summary-model}
-ppc_ribbon(yrep=(predict(mod_disp,summary=FALSE)),
-           x=rank(predict(mod_disp)[,1]),
-           y=data_disp$Neggs_arrival,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_disp, summary = FALSE)),
+  x = rank(predict(mod_disp)[, 1]),
+  y = data_disp$Neggs_arrival,
+  prob = 0.5, prob_outer = 0.95
+)
 
-ppc_ribbon(yrep=(predict(mod_disp_dens,summary=FALSE)),
-           x=rank(predict(mod_disp_dens)[,1]),
-           y=data_disp_dens$Neggs_arrival,
-           prob = 0.5, prob_outer=0.95)
+ppc_ribbon(
+  yrep = (predict(mod_disp_dens, summary = FALSE)),
+  x = rank(predict(mod_disp_dens)[, 1]),
+  y = data_disp_dens$Neggs_arrival,
+  prob = 0.5, prob_outer = 0.95
+)
 ```
 
 It looks a bit better in both cases (and in the summary the sign of the added effect goes in the expected direction).
 
 ```{r loo-dispersal}
-loo_compare(loo(mod_disp_alt),loo(mod_disp))
-loo_compare(loo(mod_disp_dens_alt),loo(mod_disp_dens))
+loo_compare(loo(mod_disp_alt), loo(mod_disp))
+loo_compare(loo(mod_disp_dens_alt), loo(mod_disp_dens))
 ```
 
 We do need to use cross-validation instead given the number of "problematic" observations based on `pareto_k`, but model comparison suggest that adding `Neggs_total` as covariate improve the models. In any case, it is easy to see that our main interpretations are unchanged by the choice of model, for instance by changing the source model in the plots below. So let's go to plotting now.
@@ -697,25 +767,27 @@ We do need to use cross-validation instead given the number of "problematic" obs
 We need to create a "prediction" table containing the posterior, which we then transform back to the micrometer scale using the original data mean and SD. Then we add these posteriors to a plot showing observed data points (the average of both observers):
 
 ```{r figure-size}
-preds_size <- data_size %>% 
-  select(context,Location,Treatment) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
-  unique() %>% 
-  add_fitted_draws(mod_size,re_formula = NA) %>% 
-  ungroup() %>% 
-  mutate(.value=.value* (sd(data_size$tibia,na.rm=TRUE))+ (mean(data_size$tibia,na.rm=TRUE))) %>% 
-  select(.draw,.value,Treatment,Location,context)
+preds_size <- data_size %>%
+  select(context, Location, Treatment) %>%
+  mutate(Treatment = fct_relevel(factor(Treatment), "stock", after = 0)) %>%
+  unique() %>%
+  add_fitted_draws(mod_size, re_formula = NA) %>%
+  ungroup() %>%
+  mutate(.value = .value * (sd(data_size$tibia, na.rm = TRUE)) + (mean(data_size$tibia, na.rm = TRUE))) %>%
+  select(.draw, .value, Treatment, Location, context)
 
 
 ggplot(preds_size) +
-  geom_jitter(data=data_size %>% 
-                group_by(Location,Treatment,IDindiv) %>% 
-                summarise(tibia=mean(tibia)),
-              aes(x=Location,y=tibia),col="grey50",alpha=0.4)+
-  stat_eye(aes(x=Location,y=.value),.width=c(0.01,0.95), slab_alpha=0.7)+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Mean tibia length (μm)")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  geom_jitter(
+    data = data_size %>%
+      group_by(Location, Treatment, IDindiv) %>%
+      summarise(tibia = mean(tibia)),
+    aes(x = Location, y = tibia), col = "grey50", alpha = 0.4
+  ) +
+  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  scale_x_discrete("Experimental context") +
+  scale_y_continuous("Mean tibia length (µm)") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
   theme_bw()
 ```
 
@@ -725,29 +797,28 @@ ggplot(preds_size) +
 We'll only display activity, as mentioned above. It is however easy to alter the source model and input data to display results for the othe rtwo movement metrics. We arrange things so that observed data point size is proportional to observation time. We also use the "prediction" table to get an estimate of the posterior distribution of the grand mean at the same time:
 
 ```{r figure-mvt}
-preds_mvt <- data_mvt %>% 
-  select(context,Location,Treatment) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_activity,re_formula = NA) %>% 
+preds_mvt <- data_mvt %>%
+  select(context, Location, Treatment) %>%
+  mutate(Treatment = fct_relevel(factor(Treatment), "stock", after = 0)) %>%
+  distinct() %>%
+  add_fitted_draws(mod_activity, re_formula = NA) %>%
   ungroup()
 
 ggplot(preds_mvt) +
-  geom_jitter(data=data_mvt,aes(x=Location,y=mean_activity, size=obs_time),col="grey50",alpha=0.4)+
-  scale_size(range=c(1,4), guide=FALSE)+
-  ggnewscale::new_scale("size")+
-  stat_eye(aes(x=Location,y=.value), .width=c(0.01,0.95), slab_alpha=0.7)+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Proportion of time active")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
+  geom_jitter(data = data_mvt, aes(x = Location, y = mean_activity, size = obs_time), col = "grey50", alpha = 0.4) +
+  scale_size(range = c(1, 4), guide = FALSE) +
+  ggnewscale::new_scale("size") +
+  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  scale_x_discrete("Experimental context") +
+  scale_y_continuous("Proportion of time active") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
   theme_bw()
 
-#posterior grand mean
-preds_mvt %>% 
-  group_by(.draw) %>% 
-  summarise(grandmean=mean(.value)) %>% 
+# posterior grand mean
+preds_mvt %>%
+  group_by(.draw) %>%
+  summarise(grandmean = mean(.value)) %>%
   mean_hdi(grandmean)
-
 ```
 
 ## Fecundity
@@ -759,65 +830,68 @@ Same as before, except that:
 
 ```{r figure-fecundity}
 
-p1 <- data_fec %>% 
-  select(Location, Treatment, context) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_fec,re_formula=NA) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
-  ggplot()+
-  geom_jitter(data=data_fec,
-              aes(Location,Fecundity),
-              col="#d95f02",alpha=0.4)+
-  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02", slab_alpha=0.7)+
-  scale_x_discrete("")+
-  scale_y_continuous("# of hosts parasitised")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(0,90))+
+p1 <- data_fec %>%
+  select(Location, Treatment, context) %>%
+  distinct() %>%
+  add_fitted_draws(mod_fec, re_formula = NA) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  ggplot() +
+  geom_jitter(
+    data = data_fec,
+    aes(Location, Fecundity),
+    col = "#d95f02", alpha = 0.4
+  ) +
+  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7) +
+  scale_x_discrete("") +
+  scale_y_continuous("# of hosts parasitised") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(0, 90)) +
   theme_bw()
 
-p2 <- data_fec_dens %>%  
-  select(Location, Treatment, context, Density, Density_centred) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_fec_dens,re_formula=NA) %>%
-  ungroup() %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
-  ggplot()+
-  geom_point(data=data_fec_dens,
-             aes(Location,Fecundity, col=Density),
-             position=position_jitterdodge(dodge.width=1), alpha=0.4)+
-  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge", slab_alpha=0.7)+
-  scale_x_discrete("")+
-  scale_y_continuous("# of hosts parasitised")+
-  scale_fill_manual(values=c("#d95f02","#7570b3")) + 
-  scale_colour_manual(values=c("#d95f02","#7570b3")) + 
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(0,90))+
-  theme_bw()+
+p2 <- data_fec_dens %>%
+  select(Location, Treatment, context, Density, Density_centred) %>%
+  distinct() %>%
+  add_fitted_draws(mod_fec_dens, re_formula = NA) %>%
+  ungroup() %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  ggplot() +
+  geom_point(
+    data = data_fec_dens,
+    aes(Location, Fecundity, col = Density),
+    position = position_jitterdodge(dodge.width = 1), alpha = 0.4
+  ) +
+  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7) +
+  scale_x_discrete("") +
+  scale_y_continuous("# of hosts parasitised") +
+  scale_fill_manual(values = c("#d95f02", "#7570b3")) +
+  scale_colour_manual(values = c("#d95f02", "#7570b3")) +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(0, 90)) +
+  theme_bw() +
   guides(size = FALSE)
 
-p3 <- data_fec_dens %>%  
-  select(Location, Treatment, context, Density, Density_centred) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_fec_dens,re_formula=NA) %>%
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
-  ungroup() %>% 
-  select(Location, Treatment, Density, .value, .draw) %>% 
-  pivot_wider(names_from=Density,values_from=.value) %>% 
-  mutate(diff=log(high)-log(low)) %>% 
-  ggplot()+
-  stat_eye(aes(Location, diff), .width=c(0.01,0.95),slab_alpha=0.7)+
-  geom_hline(yintercept=0,lty=2)+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Net effect of density (log scale)")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(-1,1))+
+p3 <- data_fec_dens %>%
+  select(Location, Treatment, context, Density, Density_centred) %>%
+  distinct() %>%
+  add_fitted_draws(mod_fec_dens, re_formula = NA) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  ungroup() %>%
+  select(Location, Treatment, Density, .value, .draw) %>%
+  pivot_wider(names_from = Density, values_from = .value) %>%
+  mutate(diff = log(high) - log(low)) %>%
+  ggplot() +
+  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  geom_hline(yintercept = 0, lty = 2) +
+  scale_x_discrete("Experimental context") +
+  scale_y_continuous("Net effect of density (log scale)") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(-1, 1)) +
   theme_bw()
 
-(p1/p2/p3) & plot_annotation(tag_levels = "A")
-
+(p1 / p2 / p3) & plot_annotation(tag_levels = "A")
 ```
 
 
@@ -827,72 +901,82 @@ Same as with fecundity data, except that we reuse the variable point size from t
 
 ```{r figure-dispersal}
 
-p1 <- data_disp %>% 
-  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
-         Neggs_all = 1) %>% 
-  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_disp,re_formula=NA) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
-  ggplot()+
-  geom_jitter(data=data_disp,
-              aes(Location,Neggs_arrival/Neggs_all, size=Neggs_all),
-              col="#d95f02",alpha=0.4)+  
-  scale_size(range=c(1,4), guide=FALSE)+
-  ggnewscale::new_scale("size")+
-  stat_eye(aes(Location, .value),.width=c(0.01,0.95),fill="#d95f02", slab_alpha=0.7)+
-  scale_x_discrete("")+
-  scale_y_continuous("Effective dispersal rate")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(0,1))+
+p1 <- data_disp %>%
+  mutate(
+    Neggs_all_scaled = mean(Neggs_all_scaled),
+    Neggs_all = 1
+  ) %>%
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all) %>%
+  distinct() %>%
+  add_fitted_draws(mod_disp, re_formula = NA) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  ggplot() +
+  geom_jitter(
+    data = data_disp,
+    aes(Location, Neggs_arrival / Neggs_all, size = Neggs_all),
+    col = "#d95f02", alpha = 0.4
+  ) +
+  scale_size(range = c(1, 4), guide = FALSE) +
+  ggnewscale::new_scale("size") +
+  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7) +
+  scale_x_discrete("") +
+  scale_y_continuous("Effective dispersal rate") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(0, 1)) +
   theme_bw()
 
 
-p2 <- data_disp_dens %>%  
-  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
-         Neggs_all = 1) %>% 
-  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_disp_dens,re_formula=NA) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% 
-  ggplot()+
-  geom_point(data=data_disp_dens,
-             aes(Location,Neggs_arrival/Neggs_all, col=Density, size=Neggs_all),
-             position=position_jitterdodge(dodge.width=1), alpha=0.4)+
-  scale_size(range=c(1,4), guide=FALSE)+
-  ggnewscale::new_scale("size")+
-  stat_eye(aes(Location, .value,fill=Density), .width=c(0.01,0.95), position="dodge", slab_alpha=0.7)+
-  scale_x_discrete("")+
-  scale_y_continuous("Effective dispersal rate")+
-  scale_fill_manual(values=c("#d95f02","#7570b3")) + 
-  scale_colour_manual(values=c("#d95f02","#7570b3")) + 
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(0,1))+
+p2 <- data_disp_dens %>%
+  mutate(
+    Neggs_all_scaled = mean(Neggs_all_scaled),
+    Neggs_all = 1
+  ) %>%
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>%
+  distinct() %>%
+  add_fitted_draws(mod_disp_dens, re_formula = NA) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  ggplot() +
+  geom_point(
+    data = data_disp_dens,
+    aes(Location, Neggs_arrival / Neggs_all, col = Density, size = Neggs_all),
+    position = position_jitterdodge(dodge.width = 1), alpha = 0.4
+  ) +
+  scale_size(range = c(1, 4), guide = FALSE) +
+  ggnewscale::new_scale("size") +
+  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7) +
+  scale_x_discrete("") +
+  scale_y_continuous("Effective dispersal rate") +
+  scale_fill_manual(values = c("#d95f02", "#7570b3")) +
+  scale_colour_manual(values = c("#d95f02", "#7570b3")) +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(0, 1)) +
   theme_bw()
 
-p3 <- data_disp_dens %>%  
-  mutate(Neggs_all_scaled = mean(Neggs_all_scaled),
-         Neggs_all = 1) %>% 
-  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_disp_dens,re_formula=NA) %>% 
-  ungroup() %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reference", after=Inf)) %>% 
-  mutate(Treatment = fct_relevel(Treatment,"reduced connectivity", after=Inf)) %>% select(Location, Treatment, Density, .value, .draw) %>% 
-  pivot_wider(names_from=Density,values_from=.value) %>% 
-  mutate(diff=logit(high)-logit(low)) %>% 
-  ggplot()+
-  stat_eye(aes(Location, diff), .width=c(0.01,0.95),slab_alpha=0.7)+
-  geom_hline(yintercept=0,lty=2)+
-  scale_x_discrete("Experimental context")+
-  scale_y_continuous("Net effect of density (logit scale)")+
-  facet_grid(cols=vars(Treatment),scales="free_x",space="free_x")+
-  coord_cartesian(ylim=c(-3,3))+
+p3 <- data_disp_dens %>%
+  mutate(
+    Neggs_all_scaled = mean(Neggs_all_scaled),
+    Neggs_all = 1
+  ) %>%
+  select(Location, Treatment, context, Neggs_all_scaled, Neggs_all, Density, Density_centred) %>%
+  distinct() %>%
+  add_fitted_draws(mod_disp_dens, re_formula = NA) %>%
+  ungroup() %>%
+  mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
+  select(Location, Treatment, Density, .value, .draw) %>%
+  pivot_wider(names_from = Density, values_from = .value) %>%
+  mutate(diff = logit(high) - logit(low)) %>%
+  ggplot() +
+  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  geom_hline(yintercept = 0, lty = 2) +
+  scale_x_discrete("Experimental context") +
+  scale_y_continuous("Net effect of density (logit scale)") +
+  facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
+  coord_cartesian(ylim = c(-3, 3)) +
   theme_bw()
 
 
-(p1/p2/p3) & plot_annotation(tag_levels = "A")
-
+(p1 / p2 / p3) & plot_annotation(tag_levels = "A")
 ```
