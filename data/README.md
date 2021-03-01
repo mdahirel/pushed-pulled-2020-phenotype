@@ -1,2 +1,3 @@
-# pushed-pulled-2020-phenotype
- data and script for a manuscript on phenotypic changes during pushed vs. pulled range expansions
+# data files
+ 
+ source data for the analyses, see the `analysis.Rmd` and `supplementary.Rmd` files in the `R` folder for detailed information about these files and their contents
