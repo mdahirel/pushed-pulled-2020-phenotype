@@ -23,18 +23,18 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 
 ```{r load-packages}
 library(tidyverse) # CRAN v1.3.0
-library(brms)      # CRAN v2.14.4
+library(brms) # CRAN v2.14.4
 library(tidybayes) # CRAN v2.3.1
-library(here)      # CRAN v1.0.1
+library(here) # CRAN v1.0.1
 ```
 
 # S.1 - Model descriptions
 
-We outline here the structure of the models presented in the main text, as well as the corresponding priors. Notation conventions and (weakly informative) prior choices mostly follow McElreath [-@mcelreath2020]. We use the $\mathrm{Half-Normal}(0,\sigma)$ notation to denote a half-normal distribution based on a $\mathrm{Normal}(0,\sigma)$ distribution.
+We outline here the structure of the models presented in the main text, as well as the corresponding priors. Notation conventions and (weakly informative) prior choices mostly follow @mcelreath2020. We use the $\mathrm{Half-Normal}(0,\sigma)$ notation to denote a half-normal distribution based on a $\mathrm{Normal}(0,\sigma)$ distribution.
 
 ## Wasp size
 
-After centring and standardising to unit 1SD, tibia lengths $z_{m,i,j,k,o}$ with $m$ the genetic mix of origin, $i$ the experimental landscape of origin, $j$ the source population (core, edge or stock) and $k$ the individual (each individual measured twice, $o$ denoting the observer) can be described by the following model:
+After centering and standardizing to unit 1SD, tibia lengths $z_{m,i,j,k,o}$ with $m$ the genetic mix of origin, $i$ the experimental landscape of origin, $j$ the source population (core, edge or stock) and $k$ the individual (each individual measured twice, $o$ denoting the observer) can be described by the following model:
 
 $$
 \begin{equation}
@@ -47,7 +47,7 @@ z_{m,i,j,k,o} \sim \mathrm{Normal}(\mu_{m,i,j,k},\sigma_{r}), \\
 \end{equation}
 $$
 
-In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ priors for all standard deviations (including residual standard deviation $\sigma_{r}$), following McElreath [-@mcelreath2020].
+In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ priors for all standard deviations (including residual standard deviation $\sigma_{r}$), following @mcelreath2020.
 
 ## Short-term activity
 
@@ -66,7 +66,7 @@ Priors for fixed and random effects are as in **S.1.1**, except for the intercep
 
 ## Fecundity models
 
-The total number of hosts successfully parasitised by a wasp in 24h, $F$, is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
+The total number of hosts successfully parasitized by a wasp in 24h, $F$, is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
 
 $$
 \begin{equation}
@@ -82,12 +82,12 @@ F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j,k},\lambda_{m,i,j,k},\phi)
 \end{equation}
 $$
 In the model for the density-dependent experiment, $\beta_{n}$ include, in addition to the effects of context, effects of density and density × context interactions.  
-Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component ($\beta_{0[\lambda]}$) was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component ($\beta_{0[p]}$) was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters corresponding to the logit of a proportion. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SDs corresponding to genetic mix ($\sigma_{\alpha}$, $\sigma_{\nu}$) here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
+Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component ($\beta_{0[\lambda]}$) was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component ($\beta_{0[p]}$) was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from @mcelreath2020 for parameters corresponding to the logit of a proportion. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SDs corresponding to genetic mix ($\sigma_{\alpha}$, $\sigma_{\nu}$) here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces a few divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
 Finally, we set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the shape parameter ($1/\phi$), again following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
 ## Effective dispersal models
 
-Our measure of effective dispersal is the proportion of offspring $p_{m,i,j,k} = f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analysed using binomial models:
+Our measure of effective dispersal is the proportion of offspring $p_{m,i,j,k} = f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analyzed using binomial models:
 
 $$
 \begin{equation}
@@ -103,40 +103,42 @@ $\beta_{n}$ here include, in addition to the effects of context, the effect of (
 # S.2 - Posterior pairwise comparisons between treatments
 
 ```{r load-raw-data}
-##we're going to need a reference table with all the covariates of interest as a base to generate the predictions to compare
+## we're going to need a reference table with all the covariates of interest as a base to generate the predictions to compare
 
 ## let's do that using one of the original dataset as a starting point:
 
-raw_disp_dens <- read_csv(here("data","exp3_dispersal.csv"))
+raw_disp_dens <- read_csv(here("data", "exp3_dispersal.csv"))
 
-template <- raw_disp_dens %>% 
-                mutate(Location=fct_recode(factor(Location),edge="front")) %>% 
-                mutate(Treatment=fct_recode(factor(Treatment),
-                                            reference="control",
-                                            `reduced connectivity`="restricted connectedness")) %>%
-                mutate(context=paste(Treatment,Location)) %>% 
-                mutate(context=relevel(factor(context),"stock stock")) %>%
-                mutate(context=fct_recode(context,stock="stock stock")) %>% 
-                mutate(context = fct_relevel(context,"stock", after=0)) %>%
-                mutate(Density=fct_relevel(factor(Density),"high",after=Inf)) %>% 
-                mutate(Density_centred = as.numeric(Density=="high") - mean(as.numeric(Density=="high")))
+template <- raw_disp_dens %>%
+  mutate(Location = fct_recode(factor(Location), edge = "front")) %>%
+  mutate(Treatment = fct_recode(factor(Treatment),
+    reference = "control",
+    `reduced connectivity` = "restricted connectedness"
+  )) %>%
+  mutate(context = paste(Treatment, Location)) %>%
+  mutate(context = relevel(factor(context), "stock stock")) %>%
+  mutate(context = fct_recode(context, stock = "stock stock")) %>%
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  mutate(Density = fct_relevel(factor(Density), "high", after = Inf)) %>%
+  mutate(Density_centred = as.numeric(Density == "high") - mean(as.numeric(Density == "high")))
 
 
-template <- template %>% 
-  select(Treatment,Location,Density,Density_centred,context) %>% 
-  mutate(Treatment=fct_relevel(factor(Treatment),"stock",after=0)) %>% 
-  distinct() %>% 
-  mutate(Neggs_all_scaled = 0,
-         Neggs_all = 1)
+template <- template %>%
+  select(Treatment, Location, Density, Density_centred, context) %>%
+  mutate(Treatment = fct_relevel(factor(Treatment), "stock", after = 0)) %>%
+  distinct() %>%
+  mutate(
+    Neggs_all_scaled = 0,
+    Neggs_all = 1
+  )
 
 ## and we also need the info about tibia mean and SD
-raw_size <- read_csv(here("data","exp1_bodysize.csv"))
+raw_size <- read_csv(here("data", "exp1_bodysize.csv"))
 
 summary_size <- raw_size %>%
-  pivot_longer(cols=c("tibia_obsA","tibia_obsC"),names_to="observer",values_to="tibia") %>% 
-  filter(is.na(tibia)==FALSE) %>% 
-  summarise(mean=mean(tibia),sd=sd(tibia))
-
+  pivot_longer(cols = c("tibia_obsA", "tibia_obsC"), names_to = "observer", values_to = "tibia") %>%
+  filter(is.na(tibia) == FALSE) %>%
+  summarise(mean = mean(tibia), sd = sd(tibia))
 ```
 
 ## Wasp size
@@ -144,16 +146,16 @@ summary_size <- raw_size %>%
 ```{r pairwise-size}
 load(here("R_output", "model_size.Rdata"))
 
-template %>% 
-  filter(Density=="low") %>% ## only 1 density in size data, so we discard that part of the template
-  add_fitted_draws(mod_size,re_formula = NA) %>% # we add fitted values
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context) %>% # we select only relevant variables
-  compare_levels(.value,by=context) %>% # we compare pair by pair
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (in SD units)")+
-  scale_y_discrete("")+
+template %>%
+  filter(Density == "low") %>% ## only 1 density in size data, so we discard that part of the template
+  add_fitted_draws(mod_size, re_formula = NA) %>% # we add fitted values
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context) %>% # we select only relevant variables
+  compare_levels(.value, by = context) %>% # we compare pair by pair
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (in SD units)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
@@ -165,16 +167,16 @@ template %>%
 ```{r pairwise-activity}
 load(here("R_output", "models_mvt.Rdata"))
 
-template %>% 
-  filter(Density=="low") %>%
-  add_fitted_draws(mod_activity,re_formula = NA, scale= "linear") %>% 
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context) %>% 
-  compare_levels(.value,by=context) %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (logit scale)")+
-  scale_y_discrete("")+
+template %>%
+  filter(Density == "low") %>%
+  add_fitted_draws(mod_activity, re_formula = NA, scale = "linear") %>%
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context) %>%
+  compare_levels(.value, by = context) %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (logit scale)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
@@ -187,16 +189,16 @@ template %>%
 load(here("R_output", "model_fecundity1.Rdata"))
 
 
-template %>% 
-  filter(Density=="low") %>% 
-  add_fitted_draws(mod_fec,re_formula = NA, scale = "linear") %>% 
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context) %>% 
-  compare_levels(.value,by=context) %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (log scale)")+
-  scale_y_discrete("")+
+template %>%
+  filter(Density == "low") %>%
+  add_fitted_draws(mod_fec, re_formula = NA, scale = "linear") %>%
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context) %>%
+  compare_levels(.value, by = context) %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (log scale)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
@@ -206,21 +208,21 @@ template %>%
 ```{r pairwise-fecundity2}
 load(here("R_output", "model_fecundity2.Rdata"))
 
-template %>% 
-  add_fitted_draws(mod_fec_dens,re_formula = NA, scale= "linear") %>% 
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context,Density) %>% 
-  mutate(Density=factor(paste(Density, "density",sep=" "))) %>% 
-  mutate(Density = fct_relevel(Density,"low density", after=0)) %>%
-  group_by(Density) %>% 
-  compare_levels(.value,by=context) %>% 
-  ungroup() %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (log scale)")+
-  scale_y_discrete("")+
+template %>%
+  add_fitted_draws(mod_fec_dens, re_formula = NA, scale = "linear") %>%
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context, Density) %>%
+  mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+  mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+  group_by(Density) %>%
+  compare_levels(.value, by = context) %>%
+  ungroup() %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (log scale)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
-  theme_bw() + 
+  theme_bw() +
   facet_wrap(~Density)
 ```
 
@@ -231,16 +233,16 @@ template %>%
 ```{r pairwise-dispersal1}
 load(here("R_output", "model_dispersal1.Rdata"))
 
-template %>% 
-  filter(Density=="low") %>% 
-  add_fitted_draws(mod_disp,re_formula = NA, scale= "linear") %>% 
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context) %>% 
-  compare_levels(.value,by=context) %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (logit scale)")+
-  scale_y_discrete("")+
+template %>%
+  filter(Density == "low") %>%
+  add_fitted_draws(mod_disp, re_formula = NA, scale = "linear") %>%
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context) %>%
+  compare_levels(.value, by = context) %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (logit scale)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
   theme_bw()
 ```
@@ -250,21 +252,21 @@ template %>%
 ```{r pairwise-dispersal2}
 load(here("R_output", "model_dispersal2.Rdata"))
 
-template %>% 
-  add_fitted_draws(mod_disp_dens,re_formula = NA, scale= "linear") %>% 
-  ungroup() %>% 
-  select(.draw,.value,Treatment,Location,context,Density) %>% 
-  mutate(Density=factor(paste(Density, "density",sep=" "))) %>% 
-  mutate(Density = fct_relevel(Density,"low density", after=0)) %>%
-  group_by(Density) %>% 
-  compare_levels(.value,by=context) %>% 
-  ungroup() %>% 
-  ggplot()+
-  stat_eye(aes(y=context,x=.value), .width=c(0.01,0.95))+
-  scale_x_continuous("Posterior difference between contexts (logit scale)")+
-  scale_y_discrete("")+
+template %>%
+  add_fitted_draws(mod_disp_dens, re_formula = NA, scale = "linear") %>%
+  ungroup() %>%
+  select(.draw, .value, Treatment, Location, context, Density) %>%
+  mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+  mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+  group_by(Density) %>%
+  compare_levels(.value, by = context) %>%
+  ungroup() %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  scale_x_continuous("Posterior difference between contexts (logit scale)") +
+  scale_y_discrete("") +
   geom_vline(xintercept = 0) +
-  theme_bw() + 
+  theme_bw() +
   facet_wrap(~Density)
 ```
 
@@ -272,31 +274,34 @@ template %>%
 
 # S.3 - Effect of experimental connectivity level on demographic variability
 
-In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on Rodrigues & Johnstone [-@rodrigues2014], and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways.  
+In the main text, we mention that levels of environmental variability may influence the slope of the density-dispersal relationship, based on @rodrigues2014, and that it *may* explain how core patches from landscapes with different connectivity differ in dispersal dynamics in unexpected ways.  
 To validate this, we need to show that experimental treatment has an effect on environmental variability in core patches. In our case, this is equivalent to looking at demographic variability (because resources \_hosts\_ are fixed, so the amount of resource per individual is only driven by the number of individuals).  
-We do have access to population size estimates for this experiment. These data are re-used from Dahirel et al. [-@dahirel2020], we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population sizes were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
+We do have access to population size estimates for this experiment. These data are re-used from @dahirel2020, we invite the reader to look at the original source for details about the raw data characteristics. The processed dataset contains information about mean population size (proportion of hosts parasitised), SD and coefficient of variation CV for each experimental landscape. Because population sizes were estimated semi-automatically using four differently-biased computer macros that roughly compensate each other [again, see @dahirel2020], we have four values per landscape, one per macro/"observer".
 
 ```{r data-processing-cv}
 
-raw_dynamics <- read_csv(here("data","expansion_data","Trichogramma_dynamics.csv"))
+raw_dynamics <- read_csv(here("data", "expansion_data", "Trichogramma_dynamics.csv"))
 
-data_cv <- raw_dynamics %>% 
-  mutate(Mix= as.numeric(str_sub(Image,1,1)),
-         Treatment = str_sub(Image,2,3),
-         Replicate = as.numeric(str_sub(Image,4,4)),
-         Patch = as.numeric(str_sub(Image,6,7))
-  ) %>% 
-  #no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
-#or digit-digit (patches 10 and beyond)
-## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
-  filter(Patch==0) %>% #we only keep the core patch for this analysis
-  mutate(landscapeID=paste("Mix",Mix,"_Treatment",Treatment,"_Replicate",Replicate,sep="")) %>% #a unique replicate ID
-  mutate(Peggs_est=P/(P+H), ## proportion of pixels counted as parasitised (estimated)
-         Mix = factor(Mix)) %>% 
-  mutate(Treatment = fct_recode(Treatment,`reference`="PL",`reduced connectivity`="PS")) %>% 
-  group_by(Treatment,landscapeID,Macro,Mix) %>% 
-  summarise(meanP=mean(Peggs_est,na.rm=TRUE),sdP=sd(Peggs_est,na.rm=TRUE)) %>% 
-  mutate(CV_P=sdP/meanP) %>% 
+data_cv <- raw_dynamics %>%
+  mutate(
+    Mix = as.numeric(str_sub(Image, 1, 1)),
+    Treatment = str_sub(Image, 2, 3),
+    Replicate = as.numeric(str_sub(Image, 4, 4)),
+    Patch = as.numeric(str_sub(Image, 6, 7))
+  ) %>%
+  # no further processing needed; we exploit the fact that chars 6&7 are either digit dot (patchs 0 to 9)
+  # or digit-digit (patches 10 and beyond)
+  ## as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  filter(Patch == 0) %>% # we only keep the core patch for this analysis
+  mutate(landscapeID = paste("Mix", Mix, "_Treatment", Treatment, "_Replicate", Replicate, sep = "")) %>% # a unique replicate ID
+  mutate(
+    Peggs_est = P / (P + H), ## proportion of pixels counted as parasitised (estimated)
+    Mix = factor(Mix)
+  ) %>%
+  mutate(Treatment = fct_recode(Treatment, `reference` = "PL", `reduced connectivity` = "PS")) %>%
+  group_by(Treatment, landscapeID, Macro, Mix) %>%
+  summarise(meanP = mean(Peggs_est, na.rm = TRUE), sdP = sd(Peggs_est, na.rm = TRUE)) %>%
+  mutate(CV_P = sdP / meanP) %>%
   ungroup()
 ```
 
@@ -314,45 +319,50 @@ $$
 where the $CV_{m,i,o}$ of replicate $i$ from genetic mix $m$ as seen by "observer"/macro $o$ depends on its connectivity level and on random effects of mix and macro. We use $\mathrm{Normal}(0,1)$ priors for fixed effects and $\mathrm{Half-Normal}(0,1)$ for all $\sigma$ (random effects and residuals).
 
 ```{r model-cv}
-if (file.exists(here("R_output", "model_suppl_CV.Rdata"))){
-    load(here("R_output", "model_suppl_CV.Rdata"))
-  } else {
-mod_cv <- brm(CV_P ~ Treatment + (1|Macro) + (1|Mix),
-        family=lognormal,
-        data=data_cv,
-        prior=c(
-          set_prior("normal(0,1)",class="b"),
-          set_prior("normal(0,1)",class="sd"),
-          set_prior("normal(0,1)",class="sigma")
-        ), 
-        control=list(adapt_delta=0.99, max_treedepth=20),
-        
-        chains=4, iter=4000, warmup = 2000, seed=42, backend="cmdstanr"
-        )
+if (file.exists(here("R_output", "model_suppl_CV.Rdata"))) {
+  load(here("R_output", "model_suppl_CV.Rdata"))
+} else {
+  mod_cv <- brm(CV_P ~ Treatment + (1 | Macro) + (1 | Mix),
+    family = lognormal,
+    data = data_cv,
+    prior = c(
+      set_prior("normal(0,1)", class = "b"),
+      set_prior("normal(0,1)", class = "sd"),
+      set_prior("normal(0,1)", class = "sigma")
+    ),
+    control = list(adapt_delta = 0.99, max_treedepth = 20),
+
+    chains = 4, iter = 4000, warmup = 2000, seed = 42, backend = "cmdstanr"
+  )
 
   save(list = "mod_cv", file = here("R_output", "model_suppl_CV.Rdata"))
-  }
+}
 
-ratio_cv <- posterior_samples(mod_cv) %>% select("b_Treatmentreducedconnectivity") %>% exp() %>% mean_hdi()
+ratio_cv <- posterior_samples(mod_cv) %>%
+  select("b_Treatmentreducedconnectivity") %>%
+  exp() %>%
+  mean_hdi()
 ```
 
 We find that core patches were less demographically variable when connectivity was reduced, with a CV on average `r round(ratio_cv$b_Treatmentreducedconnectivity,2)` [`r round(ratio_cv$.lower,2)`, `r round(ratio_cv$.upper,2)`] times the one of reference patches (**Fig. S.3.1**).
 
 ```{r fig-cv}
-data_cv %>% 
-  select(Treatment) %>% 
-  distinct() %>% 
-  add_fitted_draws(mod_cv,re_formula=NA) %>% 
-  ungroup() %>% 
+data_cv %>%
+  select(Treatment) %>%
+  distinct() %>%
+  add_fitted_draws(mod_cv, re_formula = NA) %>%
+  ungroup() %>%
   ggplot() +
-  geom_jitter(data=data_cv %>% 
-                group_by(Treatment,landscapeID) %>%
-                summarise(CV_P=mean(CV_P)), # each point = one pop (average of the four macros/observers)
-              aes(x=Treatment,y=CV_P),col="grey50",alpha=0.4,size=2)+
-  stat_eye(aes(x=Treatment,y=.value), .width=c(0.01,0.95), slab_alpha=0.7)+
-  scale_x_discrete("Connectivity treatment")+
-  scale_y_continuous("Core patch (x = 0) population size CV during range expansion")+
-  coord_cartesian(ylim=c(0,1.5))+
+  geom_jitter(
+    data = data_cv %>%
+      group_by(Treatment, landscapeID) %>%
+      summarise(CV_P = mean(CV_P)), # each point = one pop (average of the four macros/observers)
+    aes(x = Treatment, y = CV_P), col = "grey50", alpha = 0.4, size = 2
+  ) +
+  stat_eye(aes(x = Treatment, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  scale_x_discrete("Connectivity treatment") +
+  scale_y_continuous("Core patch (x = 0) population size CV during range expansion") +
+  coord_cartesian(ylim = c(0, 1.5)) +
   theme_bw()
 ```
 
