@@ -784,7 +784,7 @@ ggplot(preds_size) +
       summarise(tibia = mean(tibia)),
     aes(x = Location, y = tibia), col = "grey50", alpha = 0.4
   ) +
-  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("Experimental context") +
   scale_y_continuous("Mean tibia length (µm)") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -808,7 +808,7 @@ ggplot(preds_mvt) +
   geom_jitter(data = data_mvt, aes(x = Location, y = mean_activity, size = obs_time), col = "grey50", alpha = 0.4) +
   scale_size(range = c(1, 4), guide = FALSE) +
   ggnewscale::new_scale("size") +
-  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("Experimental context") +
   scale_y_continuous("Proportion of time active") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -842,7 +842,7 @@ p1 <- data_fec %>%
     aes(Location, Fecundity),
     col = "#d95f02", alpha = 0.4
   ) +
-  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7) +
+  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("") +
   scale_y_continuous("# of hosts parasitised") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -862,7 +862,7 @@ p2 <- data_fec_dens %>%
     aes(Location, Fecundity, col = Density),
     position = position_jitterdodge(dodge.width = 1), alpha = 0.4
   ) +
-  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7) +
+  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("") +
   scale_y_continuous("# of hosts parasitised") +
   scale_fill_manual(values = c("#d95f02", "#7570b3")) +
@@ -883,7 +883,7 @@ p3 <- data_fec_dens %>%
   pivot_wider(names_from = Density, values_from = .value) %>%
   mutate(diff = log(high) - log(low)) %>%
   ggplot() +
-  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
   geom_hline(yintercept = 0, lty = 2) +
   scale_x_discrete("Experimental context") +
   scale_y_continuous("Net effect of density (log scale)") +
@@ -919,7 +919,7 @@ p1 <- data_disp %>%
   ) +
   scale_size(range = c(1, 4), guide = FALSE) +
   ggnewscale::new_scale("size") +
-  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7) +
+  stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("") +
   scale_y_continuous("Effective dispersal rate") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -945,7 +945,7 @@ p2 <- data_disp_dens %>%
   ) +
   scale_size(range = c(1, 4), guide = FALSE) +
   ggnewscale::new_scale("size") +
-  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7) +
+  stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7, point_interval = mean_hdi) +
   scale_x_discrete("") +
   scale_y_continuous("Effective dispersal rate") +
   scale_fill_manual(values = c("#d95f02", "#7570b3")) +
@@ -969,7 +969,7 @@ p3 <- data_disp_dens %>%
   pivot_wider(names_from = Density, values_from = .value) %>%
   mutate(diff = logit(high) - logit(low)) %>%
   ggplot() +
-  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  stat_eye(aes(Location, diff), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
   geom_hline(yintercept = 0, lty = 2) +
   scale_x_discrete("Experimental context") +
   scale_y_continuous("Net effect of density (logit scale)") +

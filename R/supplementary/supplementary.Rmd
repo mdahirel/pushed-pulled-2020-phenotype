@@ -153,7 +153,8 @@ template %>%
   select(.draw, .value, Treatment, Location, context) %>% # we select only relevant variables
   compare_levels(.value, by = context) %>% # we compare pair by pair
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (in SD units)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -174,7 +175,8 @@ template %>%
   select(.draw, .value, Treatment, Location, context) %>%
   compare_levels(.value, by = context) %>%
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (logit scale)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -196,7 +198,8 @@ template %>%
   select(.draw, .value, Treatment, Location, context) %>%
   compare_levels(.value, by = context) %>%
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (log scale)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -218,7 +221,8 @@ template %>%
   compare_levels(.value, by = context) %>%
   ungroup() %>%
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (log scale)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -240,7 +244,8 @@ template %>%
   select(.draw, .value, Treatment, Location, context) %>%
   compare_levels(.value, by = context) %>%
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (logit scale)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -262,7 +267,8 @@ template %>%
   compare_levels(.value, by = context) %>%
   ungroup() %>%
   ggplot() +
-  stat_eye(aes(y = context, x = .value), .width = c(0.01, 0.95)) +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
   scale_x_continuous("Posterior difference between contexts (logit scale)") +
   scale_y_discrete("") +
   geom_vline(xintercept = 0) +
@@ -359,7 +365,7 @@ data_cv %>%
       summarise(CV_P = mean(CV_P)), # each point = one pop (average of the four macros/observers)
     aes(x = Treatment, y = CV_P), col = "grey50", alpha = 0.4, size = 2
   ) +
-  stat_eye(aes(x = Treatment, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7) +
+  stat_eye(aes(x = Treatment, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval=mean_hdi) +
   scale_x_discrete("Connectivity treatment") +
   scale_y_continuous("Core patch (x = 0) population size CV during range expansion") +
   coord_cartesian(ylim = c(0, 1.5)) +
