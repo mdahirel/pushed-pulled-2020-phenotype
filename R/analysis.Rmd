@@ -233,7 +233,8 @@ So, before we proceed with models, we need to
 ```{r mvt-data-cleaning}
 data_mvt <- raw_mvt %>%
   filter(Generation %in% c(0, 10)) %>%
-  filter(timestamp <= 300) %>% ## some tests are filmed slightly longer than the nominal 5 minutes, this removes their ends to standardize
+  filter(timestamp <= 300) %>%
+  ## some tests are filmed slightly longer than the nominal 5 minutes, this removes their ends to standardize
   mutate(IDgroup = ifelse(Generation == 0,
     paste("Mix", Mix, "_stock", sep = ""),
     paste("Mix", Mix, "_", Treatment, "_Rep", Replicate, "_Generation10", sep = "")
@@ -426,8 +427,10 @@ data_fec_dens <- raw_fec_dens %>%
   )) %>%
   mutate(context = paste(Treatment, Location)) %>%
   mutate(context = fct_recode(context, stock = "stock stock")) %>%
-  mutate(context = fct_relevel(context, "stock", after = 0)) %>% ## just some reordering for plots later
-  mutate(Density = fct_relevel(factor(Density), "high", after = Inf)) %>% ## same
+  mutate(context = fct_relevel(context, "stock", after = 0)) %>%
+  ## just some reordering for plots later
+  mutate(Density = fct_relevel(factor(Density), "high", after = Inf)) %>%
+  ## same
   mutate(Density_centred = as.numeric(Density == "high") - mean(as.numeric(Density == "high")))
 ```
 
@@ -776,6 +779,9 @@ preds_size <- data_size %>%
   mutate(.value = .value * (sd(data_size$tibia, na.rm = TRUE)) + (mean(data_size$tibia, na.rm = TRUE))) %>%
   select(.draw, .value, Treatment, Location, context)
 
+mean_stock <- mean(subset(preds_size, Treatment == "stock")$.value)
+## used to draw a reference line; will be updated before each plot
+
 
 ggplot(preds_size) +
   geom_jitter(
@@ -785,6 +791,7 @@ ggplot(preds_size) +
     aes(x = Location, y = tibia), col = "grey50", alpha = 0.4
   ) +
   stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_x_discrete("Experimental context") +
   scale_y_continuous("Mean tibia length (µm)") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -804,12 +811,14 @@ preds_mvt <- data_mvt %>%
   add_fitted_draws(mod_activity, re_formula = NA) %>%
   ungroup()
 
+mean_stock <- mean(subset(preds_mvt, Treatment == "stock")$.value)
+
 ggplot(preds_mvt) +
   geom_jitter(data = data_mvt, aes(x = Location, y = mean_activity, size = obs_time), col = "grey50", alpha = 0.4) +
-  scale_size(range = c(1, 4), guide = FALSE) +
+  scale_size(range = c(1, 4), guide = "none") +
   ggnewscale::new_scale("size") +
   stat_eye(aes(x = Location, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval = mean_hdi) +
-  scale_x_discrete("Experimental context") +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_y_continuous("Proportion of time active") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
   theme_bw()
@@ -830,39 +839,50 @@ Same as before, except that:
 
 ```{r figure-fecundity}
 
-p1 <- data_fec %>%
+preds_fec <- data_fec %>%
   select(Location, Treatment, context) %>%
   distinct() %>%
   add_fitted_draws(mod_fec, re_formula = NA) %>%
   mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
-  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
-  ggplot() +
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf))
+
+
+mean_stock <- mean(subset(preds_fec, Treatment == "stock")$.value)
+
+p1 <- ggplot(preds_fec) +
   geom_jitter(
     data = data_fec,
     aes(Location, Fecundity),
     col = "#d95f02", alpha = 0.4
   ) +
   stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7, point_interval = mean_hdi) +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_x_discrete("") +
   scale_y_continuous("# of hosts parasitised") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
   coord_cartesian(ylim = c(0, 90)) +
   theme_bw()
 
-p2 <- data_fec_dens %>%
+preds_fec_dens <- data_fec_dens %>%
   select(Location, Treatment, context, Density, Density_centred) %>%
   distinct() %>%
   add_fitted_draws(mod_fec_dens, re_formula = NA) %>%
   ungroup() %>%
   mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
-  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
-  ggplot() +
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf))
+
+
+mean_stock <- mean(subset(preds_fec_dens, Treatment == "stock" & Density == "low")$.value)
+
+
+p2 <- ggplot(preds_fec_dens) +
   geom_point(
     data = data_fec_dens,
     aes(Location, Fecundity, col = Density),
     position = position_jitterdodge(dodge.width = 1), alpha = 0.4
   ) +
   stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7, point_interval = mean_hdi) +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_x_discrete("") +
   scale_y_continuous("# of hosts parasitised") +
   scale_fill_manual(values = c("#d95f02", "#7570b3")) +
@@ -900,8 +920,7 @@ p3 <- data_fec_dens %>%
 Same as with fecundity data, except that we reuse the variable point size from the movement data, to reflect total number of eggs laid per replicate:
 
 ```{r figure-dispersal}
-
-p1 <- data_disp %>%
+preds_disp <- data_disp %>%
   mutate(
     Neggs_all_scaled = mean(Neggs_all_scaled),
     Neggs_all = 1
@@ -910,16 +929,20 @@ p1 <- data_disp %>%
   distinct() %>%
   add_fitted_draws(mod_disp, re_formula = NA) %>%
   mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
-  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
-  ggplot() +
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf))
+
+mean_stock <- mean(subset(preds_disp, Treatment == "stock")$.value)
+
+p1 <- ggplot(preds_disp) +
   geom_jitter(
     data = data_disp,
     aes(Location, Neggs_arrival / Neggs_all, size = Neggs_all),
     col = "#d95f02", alpha = 0.4
   ) +
-  scale_size(range = c(1, 4), guide = FALSE) +
+  scale_size(range = c(1, 4), guide = "none") +
   ggnewscale::new_scale("size") +
   stat_eye(aes(Location, .value), .width = c(0.01, 0.95), fill = "#d95f02", slab_alpha = 0.7, point_interval = mean_hdi) +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_x_discrete("") +
   scale_y_continuous("Effective dispersal rate") +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
@@ -927,7 +950,7 @@ p1 <- data_disp %>%
   theme_bw()
 
 
-p2 <- data_disp_dens %>%
+preds_disp_dens <- data_disp_dens %>%
   mutate(
     Neggs_all_scaled = mean(Neggs_all_scaled),
     Neggs_all = 1
@@ -936,16 +959,20 @@ p2 <- data_disp_dens %>%
   distinct() %>%
   add_fitted_draws(mod_disp_dens, re_formula = NA) %>%
   mutate(Treatment = fct_relevel(Treatment, "reference", after = Inf)) %>%
-  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf)) %>%
-  ggplot() +
+  mutate(Treatment = fct_relevel(Treatment, "reduced connectivity", after = Inf))
+
+mean_stock <- mean(subset(preds_disp_dens, Treatment == "stock" & Density == "low")$.value)
+
+p2 <- ggplot(preds_disp_dens) +
   geom_point(
     data = data_disp_dens,
     aes(Location, Neggs_arrival / Neggs_all, col = Density, size = Neggs_all),
     position = position_jitterdodge(dodge.width = 1), alpha = 0.4
   ) +
-  scale_size(range = c(1, 4), guide = FALSE) +
+  scale_size(range = c(1, 4), guide = "none") +
   ggnewscale::new_scale("size") +
   stat_eye(aes(Location, .value, fill = Density), .width = c(0.01, 0.95), position = "dodge", slab_alpha = 0.7, point_interval = mean_hdi) +
+  geom_hline(yintercept = mean_stock, lty = 2) +
   scale_x_discrete("") +
   scale_y_continuous("Effective dispersal rate") +
   scale_fill_manual(values = c("#d95f02", "#7570b3")) +
