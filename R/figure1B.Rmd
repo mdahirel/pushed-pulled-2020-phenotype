@@ -1,0 +1,72 @@
+---
+title: "Code for the Figure 1B in : \"Landscape connectivity alters the evolution of density-dependent dispersal during pushed range expansions\" "
+author: "Maxime Dahirel, Aline Bertin, Vincent Calcagno, Camille Duraj, Simon Fellous, Géraldine Groussier, Eric Lombaert, Ludovic Mailleret, Anaël Marchand, Elodie Vercken (this code by M. Dahirel)"
+date:
+output: 
+  html_document:
+    theme: yeti
+    toc: TRUE
+    toc_float: TRUE
+    code_download: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(arm) # CRAN v1.11-2  # for the out of the box logit() functions
+library(tidyverse) # CRAN v1.3.0
+library(here) # CRAN v1.0.1
+```
+
+This code is just a modified copy of the existing code in Dahirel et al 2021 Oikos(2020 PCI Evol Biol), to recreate a version of the figure showing expansion speed.
+
+See Supplementary Material S3 for more info.
+
+We first import the population density data
+
+```{r import}
+raw_dynamics <- read_csv(here("data", "expansion_data", "Trichogramma_dynamics.csv"))
+```
+
+We then convert them to a format where we get for each replicate at each generation, the farthest populated patch:
+
+```{r wrangling}
+data_front <- raw_dynamics %>%
+  mutate(
+    Mix = as.numeric(str_sub(Image, 1, 1)),
+    Treatment = str_sub(Image, 2, 3),
+    Replicate = as.numeric(str_sub(Image, 4, 4)),
+    Patch = as.numeric(str_sub(Image, 6, 7))
+  ) %>%
+  # no further processing needed; we exploit the fact that chars 6&7 are either digit-dot (patchs 0 to 9)
+  # or digit-digit (patches 10 and beyond)
+  # as.numeric() resolves both correctly (e.g; "2." and "12" become 2 and 12)
+  mutate(
+    landscapeID = paste("Mix", Mix, "_Treatment", Treatment, "_Replicate", Replicate, sep = ""), # a unique replicate ID
+    Treatment = fct_recode(Treatment, `reference` = "PL", `reduced connectivity` = "PS")
+  ) %>%
+  group_by(landscapeID, Mix, Treatment, Generation) %>%
+  summarise(front = max(Patch)) %>%
+  ungroup() %>%
+  group_by(landscapeID) %>%
+  arrange(Generation) %>%
+  complete(nesting(Mix, Treatment, landscapeID),
+    Generation = 0:13, fill = list(front = 0)
+  ) %>% ## just so we have a generation 0 point (i.e. release) for pretty plotting
+  ungroup()
+```
+
+from there we can plot:
+
+```{r plotting}
+data_front %>%
+  ggplot() +
+  geom_line(aes(x = Generation, y = front, group = landscapeID),col="grey50") +
+  scale_y_continuous("Front location (patches from release)") +
+  facet_grid(rows=vars(Treatment))+
+  theme_bw()
+```
+
