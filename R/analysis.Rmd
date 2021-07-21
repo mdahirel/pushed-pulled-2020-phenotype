@@ -890,7 +890,7 @@ p2 <- ggplot(preds_fec_dens) +
   facet_grid(cols = vars(Treatment), scales = "free_x", space = "free_x") +
   coord_cartesian(ylim = c(0, 90)) +
   theme_bw() +
-  guides(size = FALSE)
+  guides(size = "none")
 
 p3 <- data_fec_dens %>%
   select(Location, Treatment, context, Density, Density_centred) %>%

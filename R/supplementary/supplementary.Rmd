@@ -32,7 +32,7 @@ library(here) # CRAN v1.0.1
 
 We outline here the structure of the models presented in the main text, as well as the corresponding priors. Notation conventions and (weakly informative) prior choices mostly follow @mcelreath2020. We use the $\mathrm{Half-Normal}(0,\sigma)$ notation to denote a half-normal distribution based on a $\mathrm{Normal}(0,\sigma)$ distribution.
 
-## Wasp size
+## S.1.1 - Wasp size
 
 After centering and standardizing to unit 1SD, tibia lengths $z_{m,i,j,k,o}$ with $m$ the genetic mix of origin, $i$ the experimental landscape of origin, $j$ the source population (core, edge or stock) and $k$ the individual (each individual measured twice, $o$ denoting the observer) can be described by the following model:
 
@@ -47,9 +47,9 @@ z_{m,i,j,k,o} \sim \mathrm{Normal}(\mu_{m,i,j,k},\sigma_{r}), \\
 \end{equation}
 $$
 
-In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the context-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ priors for all standard deviations (including residual standard deviation $\sigma_{r}$), following @mcelreath2020.
+In this model, the intercept $\beta_{0}$ denote the mean size in the stock populations, $\beta_{n}$ the other fixed-effect coefficients (here the connectivity × location-specific deviations from this starting size), and $\alpha$, $\gamma$, $\zeta$, $\eta$ random effects of genetic mix, experimental landscape, experimental population in landscape and individual identity, respectively. We used $\mathrm{Normal}(0,1)$ priors for fixed effects (including the intercept), and $\mathrm{Half-Normal}(0,1)$ priors for all standard deviations (including residual standard deviation $\sigma_{r}$), following @mcelreath2020.
 
-## Short-term activity
+## S.1.2 - Short-term activity
 
 For activity, we analyze the proportion of time spent active $P_{m,i,j,k}$, with again $m$ denoting the mix of origin, $i$ the landscape and $j$ the population. $k$ here corresponds to the replicate, as several independent sub-groups were tested per population of origin. For reasons outlined in the main text, we analyze replicate-level aggregate metrics, not individual-level traits. These proportions can be analyzed using a Beta model, which uses here the (mean, precision) parameterisation of the Beta distribution:
 
@@ -64,7 +64,22 @@ P_{m,i,j,k} \sim \mathrm{Beta}(p_{m,i,j}, \phi), \\
 $$
 Priors for fixed and random effects are as in **S.1.1**, except for the intercept $\beta_{0}$ which was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from McElreath [-@mcelreath2020] for parameters interpretable as the logit of a proportion. We set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the precision parameter ($1/\phi$), following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
-## Fecundity models
+## S.1.3 - Effective dispersal models
+
+Our measure of effective dispersal is the proportion of offspring $p_{m,i,j,k} = f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analyzed using binomial models:
+
+$$
+\begin{equation}
+f_{m,i,j,k} \sim \mathrm{Binomial}(F_{m,i,j,k}, p_{m,i,j,k}), \\
+\mathrm{logit}(p_{m,i,j,k}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
+\alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
+\gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
+\zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
+\end{equation}
+$$
+$\beta_{n}$ here include, in addition to the effects of connectivity × location, the effect of (standardised) total number of offspring and (in the model for the density-dependent experiment) effects of density and density × connectivity × location interactions. Priors for fixed and random effects are as in **S.1.1**, with the exception of the prior for the intercepts $\beta_{0}$. As this parameter denotes the logit of a proportion, we used $\mathrm{Normal}(0,1.5)$ priors [@mcelreath2020].
+
+## S.1.4 -Fecundity models
 
 The total number of hosts successfully parasitized by a wasp in 24h, $F$, is best described by a zero-inflated negative binomial model, with $p$ the probability of excess zeroes and $\lambda$ the mean fecundity absent zero-inflation:
 
@@ -81,24 +96,10 @@ F_{m,i,j,k} \sim \mathrm{ZINegativeBinomial}(p_{m,i,j,k},\lambda_{m,i,j,k},\phi)
 \theta_{j} \sim \mathrm{Normal}(0,\sigma_{\theta}). \\
 \end{equation}
 $$
-In the model for the density-dependent experiment, $\beta_{n}$ include, in addition to the effects of context, effects of density and density × context interactions.  
+In the model for the density-dependent experiment, $\beta_{n}$ include, in addition to the effects of connectivity × location, effects of density and density × connectivity × location interactions.  
 Priors for fixed and random effects are as in **S.1.1**, with three exceptions. First, the prior for the intercept of the negative binomial component ($\beta_{0[\lambda]}$) was set to $\mathrm{Normal}(3.8, 0.5)$. This is based on the fact wasps were offered about 90 eggs: this prior is centered on $\log(45)$, and has only limited support for values > 90 when transformed back on the data scale. The prior for the intercept of the zero-inflation component ($\beta_{0[p]}$) was set to $\mathrm{Normal}(0,1.5)$; this follows suggestions from @mcelreath2020 for parameters corresponding to the logit of a proportion. We use a narrower prior $\mathrm{Half-Normal}(0,0.2)$ for the random effect SDs corresponding to genetic mix ($\sigma_{\alpha}$, $\sigma_{\nu}$) here: the usual $\mathrm{Half-Normal}(0,1)$ we use in all other cases induces a few divergences here, a not-surprising consequence of both the model being much more complex than the others and the limited number of mixes (3). The narrower prior helps convergence by regularizing; note that inferences are the same if we use the "standard" prior.
 Finally, we set a $\mathrm{Half-Normal}(0,1)$ prior on the inverse of the shape parameter ($1/\phi$), again following suggestions made by Stan developers (https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
-## Effective dispersal models
-
-Our measure of effective dispersal is the proportion of offspring $p_{m,i,j,k} = f_{m,i,j,k}/F_{m,i,j,k}$ found in the arrival patch, compared to the total number of offspring in a replicate $k$ (arrival + departure patch, $F_{m,i,j,k}$). This can be analyzed using binomial models:
-
-$$
-\begin{equation}
-f_{m,i,j,k} \sim \mathrm{Binomial}(F_{m,i,j,k}, p_{m,i,j,k}), \\
-\mathrm{logit}(p_{m,i,j,k}) = \beta_{0} + \sum_{n=1}^{N} \beta_{n} \times x_{n[m,i,j,k]} + \alpha_{m} + \gamma_{i} + \zeta_{j}, \\
-\alpha_{m} \sim \mathrm{Normal}(0,\sigma_{\alpha}), \\
-\gamma_{i} \sim \mathrm{Normal}(0,\sigma_{\gamma}), \\
-\zeta_{j} \sim \mathrm{Normal}(0,\sigma_{\zeta}). \\
-\end{equation}
-$$
-$\beta_{n}$ here include, in addition to the effects of context, the effect of (standardised) total number of offspring and (in the model for the density-dependent experiment) effects of density and density × context interactions. Priors for fixed and random effects are as in **S.1.1**, with the exception of the prior for the intercepts $\beta_{0}$. As this parameter denotes the logit of a proportion, we used $\mathrm{Normal}(0,1.5)$ priors [@mcelreath2020].
 
 # S.2 - Posterior pairwise comparisons between treatments
 
@@ -141,7 +142,7 @@ summary_size <- raw_size %>%
   summarise(mean = mean(tibia), sd = sd(tibia))
 ```
 
-## Wasp size
+## S.2.1 - Wasp size
 
 ```{r pairwise-size}
 load(here("R_output", "model_size.Rdata"))
@@ -163,7 +164,7 @@ template %>%
 
 **Figure S.2.1** - Posterior distributions of the pairwise between-context differences in predicted wasp size (tibia length). Black dots and segments are posterior means and 95% credible intervals; differences are given in SD units (1SD = `r round(summary_size$sd,1)` μm).
 
-## Short-term activity
+## S.2.2 - Short-term activity
 
 ```{r pairwise-activity}
 load(here("R_output", "models_mvt.Rdata"))
@@ -185,54 +186,8 @@ template %>%
 
 **Figure S.2.2** - Posterior distributions of the pairwise between-context differences in predicted probability of activity. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
 
-## Fecundity
 
-```{r pairwise-fecundity1}
-load(here("R_output", "model_fecundity1.Rdata"))
-
-
-template %>%
-  filter(Density == "low") %>%
-  add_fitted_draws(mod_fec, re_formula = NA, scale = "linear") %>%
-  ungroup() %>%
-  select(.draw, .value, Treatment, Location, context) %>%
-  compare_levels(.value, by = context) %>%
-  ggplot() +
-  stat_eye(aes(y = context, x = .value), 
-           .width = c(0.01, 0.95), point_interval=mean_hdi) +
-  scale_x_continuous("Posterior difference between contexts (log scale)") +
-  scale_y_discrete("") +
-  geom_vline(xintercept = 0) +
-  theme_bw()
-```
-
-**Figure S.2.3** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale.
-
-```{r pairwise-fecundity2}
-load(here("R_output", "model_fecundity2.Rdata"))
-
-template %>%
-  add_fitted_draws(mod_fec_dens, re_formula = NA, scale = "linear") %>%
-  ungroup() %>%
-  select(.draw, .value, Treatment, Location, context, Density) %>%
-  mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
-  mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
-  group_by(Density) %>%
-  compare_levels(.value, by = context) %>%
-  ungroup() %>%
-  ggplot() +
-  stat_eye(aes(y = context, x = .value), 
-           .width = c(0.01, 0.95), point_interval=mean_hdi) +
-  scale_x_continuous("Posterior difference between contexts (log scale)") +
-  scale_y_discrete("") +
-  geom_vline(xintercept = 0) +
-  theme_bw() +
-  facet_wrap(~Density)
-```
-
-**Figure S.2.4** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 4C**.
-
-## Effective dispersal
+## S.2.3 - Effective dispersal
 
 ```{r pairwise-dispersal1}
 load(here("R_output", "model_dispersal1.Rdata"))
@@ -252,7 +207,7 @@ template %>%
   theme_bw()
 ```
 
-**Figure S.2.5** - Posterior distributions of the pairwise between-context differences in effective dispersal in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
+**Figure S.2.3** - Posterior distributions of the pairwise between-context differences in effective dispersal in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the logit scale.
 
 ```{r pairwise-dispersal2}
 load(here("R_output", "model_dispersal2.Rdata"))
@@ -276,7 +231,106 @@ template %>%
   facet_wrap(~Density)
 ```
 
-**Figure S.2.6** - Posterior distributions of the pairwise between-context differences in effective dispersal in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 5C**.
+**Figure S.2.4** - Posterior distributions of the pairwise between-context differences in effective dispersal in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 5C**.
+
+## S.2.4 - Fecundity
+
+```{r pairwise-fecundity1}
+load(here("R_output", "model_fecundity1.Rdata"))
+
+
+template %>%
+  filter(Density == "low") %>%
+  add_fitted_draws(mod_fec, re_formula = NA) %>%
+  ungroup() %>%
+  mutate(.value=log(.value)) %>% ## see commented notes below for how we do it this way
+  select(.draw, .value, Treatment, Location, context) %>%
+  compare_levels(.value, by = context) %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
+  scale_x_continuous("Posterior difference between contexts (log scale)") +
+  scale_y_discrete("") +
+  geom_vline(xintercept = 0) +
+  theme_bw()
+```
+
+**Figure S.2.5** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the first (density-independent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale.
+
+```{r pairwise-fecundity2}
+load(here("R_output", "model_fecundity2.Rdata"))
+
+template %>%
+  add_fitted_draws(mod_fec_dens, re_formula = NA) %>%
+  ungroup() %>%
+  mutate(.value=log(.value)) %>% ## see commented notes below for how we do it this way
+  select(.draw, .value, Treatment, Location, context, Density) %>%
+  mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+  mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+  group_by(Density) %>%
+  compare_levels(.value, by = context) %>%
+  ungroup() %>%
+  ggplot() +
+  stat_eye(aes(y = context, x = .value), 
+           .width = c(0.01, 0.95), point_interval=mean_hdi) +
+  scale_x_continuous("Posterior difference between contexts (log scale)") +
+  scale_y_discrete("") +
+  geom_vline(xintercept = 0) +
+  theme_bw() +
+  facet_wrap(~Density)
+```
+
+```{r}
+##some hidden code notes on how to get the effect sizes for low-high densities differences
+#dispersal
+## by making predictions on the logit scale
+#template %>%
+#    add_fitted_draws(mod_disp_dens, re_formula = NA, scale = "linear") %>%
+#    ungroup() %>% 
+#    mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+#    mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+#    group_by(context) %>%
+#    compare_levels(.value, by = Density) %>% mean_hdi()
+## or by making predictions on the data scale then logit transforming them
+#template %>%
+#    add_fitted_draws(mod_disp_dens, re_formula = NA) %>%
+#    ungroup() %>%
+#    select(.draw, .value, Treatment, Location, context, Density) %>%
+#    mutate(.value = qlogis(.value)) %>% 
+#    mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+#    mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+#    group_by(context) %>%
+#    compare_levels(.value, by = Density) %>% mean_hdi()
+##### both give exactly the same thing
+#
+## fecundity
+##predictions on the log scale
+#template %>%
+#    add_fitted_draws(mod_fec_dens, re_formula = NA, scale="linear") %>%
+#    ungroup() %>%
+#    select(.draw, .value, Treatment, Location, context, Density) %>%
+#    mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+#    mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+#    group_by(context) %>%
+#    compare_levels(.value, by = Density) %>% mean_hdi()
+#
+## or data scale then transforming
+#template %>%
+#    add_fitted_draws(mod_fec_dens, re_formula = NA) %>%
+#    ungroup() %>%
+#    select(.draw, .value, Treatment, Location, context, Density) %>% 
+#    mutate(.value = log(.value)) %>% 
+#    mutate(Density = factor(paste(Density, "density", sep = " "))) %>%
+#    mutate(Density = fct_relevel(Density, "low density", after = 0)) %>%
+#    group_by(context) %>%
+#    compare_levels(.value, by = Density) %>% mean_hdi()
+#### very different things here! why?
+#### this is because the model contains a zero-inflation component
+#### and the prediction on the log scale "ignores" it
+#### the correct one, used in paper, is the second one
+```
+
+**Figure S.2.6** - Posterior distributions of the pairwise between-context differences in predicted reproductive success in the second (density-dependent) experiment. Black dots and segments are posterior means and 95% credible intervals; comparisons are made on the log scale. Comparisons are made for each test density separately; for comparisons between low and high densities, see main text **Fig. 6C**.
 
 # S.3 - Effect of experimental connectivity level on demographic variability
 
