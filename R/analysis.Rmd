@@ -16,24 +16,25 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r packages}
-library(arm) # CRAN v1.11-2  # for the out of the box logit() functions
-library(tidyverse) # CRAN v1.3.0
+library(arm)        # CRAN v1.11-2  # for the out of the box logit() functions
+library(tidyverse)  # CRAN v1.3.1 
 
-library(cmdstanr) # version 0.3.0, using cmdstan version 2.26.1
+library(cmdstanr)   # [github::stan-dev/cmdstanr] v0.4.0.9000 
+# using cmdstan version 2.27.0
 # library(rstan)
-# rstan can be used as alternate backend; just don't forget to change the backend argument in each model
-library(brms) # CRAN v2.14.4
+# rstan can in theory be used as alternate backend; just don't forget to change the backend argument in each model
+library(brms)       # CRAN v2.15.0 
 options(mc.cores = 4) # for the number of chains running in parallel (reduce if needed, models will just take longer to run)
 
-library(bayesplot) # CRAN v1.8.0
+library(bayesplot)  # CRAN v1.8.1 
 
-library(tidybayes) # CRAN v2.3.1
+library(tidybayes)  # CRAN v2.3.1 
 
-library(ggnewscale) # CRAN v0.4.5
+library(ggnewscale) # CRAN v0.4.5 
 # ggnewscale used in plot so that prediction points and observed points can use different scales for the same aesthetic of the same plot
-library(patchwork) # [github::thomasp85/patchwork] v1.1.0.9000
+library(patchwork)  # CRAN v1.1.1 
 
-library(here) # CRAN v1.0.1
+library(here)       # CRAN v1.0.1 
 ```
 
 # Introduction
@@ -801,7 +802,7 @@ ggplot(preds_size) +
 
 ## Short-term movement
 
-We'll only display activity, as mentioned above. It is however easy to alter the source model and input data to display results for the othe rtwo movement metrics. We arrange things so that observed data point size is proportional to observation time. We also use the "prediction" table to get an estimate of the posterior distribution of the grand mean at the same time:
+We'll only display activity, as mentioned above. It is however easy to alter the source model and input data to display results for the other two movement metrics. We arrange things so that observed data point size is proportional to observation time. We also use the "prediction" table to get an estimate of the posterior distribution of the grand mean at the same time:
 
 ```{r figure-mvt}
 preds_mvt <- data_mvt %>%

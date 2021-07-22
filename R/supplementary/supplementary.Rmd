@@ -22,10 +22,10 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
 ```{r load-packages}
-library(tidyverse) # CRAN v1.3.0
-library(brms) # CRAN v2.14.4
-library(tidybayes) # CRAN v2.3.1
-library(here) # CRAN v1.0.1
+library(tidyverse) # CRAN v1.3.1 
+library(brms)      # CRAN v2.15.0 
+library(tidybayes) # CRAN v2.3.1 
+library(here)      # CRAN v1.0.1 
 ```
 
 # S.1 - Model descriptions
@@ -413,13 +413,15 @@ data_cv %>%
   add_fitted_draws(mod_cv, re_formula = NA) %>%
   ungroup() %>%
   ggplot() +
+  stat_eye(aes(x = Treatment, y = .value), 
+           .width = c(0.01, 0.95), fill="grey80", 
+           point_interval=mean_hdi) +
   geom_jitter(
     data = data_cv %>%
       group_by(Treatment, landscapeID) %>%
       summarise(CV_P = mean(CV_P)), # each point = one pop (average of the four macros/observers)
     aes(x = Treatment, y = CV_P), col = "grey50", alpha = 0.4, size = 2
   ) +
-  stat_eye(aes(x = Treatment, y = .value), .width = c(0.01, 0.95), slab_alpha = 0.7, point_interval=mean_hdi) +
   scale_x_discrete("Connectivity treatment") +
   scale_y_continuous("Core patch (x = 0) population size CV during range expansion") +
   coord_cartesian(ylim = c(0, 1.5)) +

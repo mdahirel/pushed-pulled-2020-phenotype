@@ -16,9 +16,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r packages}
-library(arm) # CRAN v1.11-2  # for the out of the box logit() functions
-library(tidyverse) # CRAN v1.3.0
-library(here) # CRAN v1.0.1
+library(arm)       # CRAN v1.11-2   # for the out of the box logit() functions
+library(tidyverse) # CRAN v1.3.1 
+library(here)      # CRAN v1.0.1 
 ```
 
 This code is just a modified copy of the existing code in Dahirel et al 2021 Oikos(2020 PCI Evol Biol), to recreate a version of the figure showing expansion speed.
