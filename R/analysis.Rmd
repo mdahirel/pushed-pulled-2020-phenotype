@@ -288,7 +288,7 @@ if (file.exists(here("R_output", "models_mvt.Rdata"))) {
     nlf(phi ~ 1 / invphi),
     invphi ~ 1
   ),
-  data = data_mvt, family = Beta,
+  data = data_mvt, family = Beta(link_phi = "identity"),
   chains = 4, iter = 8000, warmup = 4000,
   prior = c(
     set_prior("normal(0,1.5)", class = "Intercept"),
@@ -474,7 +474,7 @@ if (file.exists(here("R_output", "model_fecundity1.Rdata"))) {
     nlf(shape ~ 1 / invshape),
     invshape ~ 1
   ),
-  data = data_fec, family = zero_inflated_negbinomial,
+  data = data_fec, family = zero_inflated_negbinomial(link_shape = "identity"),
   chains = 4, iter = 4000, warmup = 2000,
   prior = c(
     set_prior("normal(3.8,0.5)", class = "Intercept"), ## see supplementary for rationale
@@ -505,7 +505,7 @@ if (file.exists(here("R_output", "model_fecundity2.Rdata"))) {
     nlf(shape ~ 1 / invshape),
     invshape ~ 1
   ),
-  data = data_fec_dens, family = zero_inflated_negbinomial,
+  data = data_fec_dens, family = zero_inflated_negbinomial(link_shape = "identity"),
   chains = 4, iter = 4000, warmup = 2000,
   prior = c(
     set_prior("normal(3.8,0.5)", class = "Intercept"),
